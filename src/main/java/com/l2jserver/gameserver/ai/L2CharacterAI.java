@@ -28,7 +28,6 @@ import static com.l2jserver.gameserver.ai.CtrlIntention.AI_INTENTION_MOVE_TO;
 import static com.l2jserver.gameserver.ai.CtrlIntention.AI_INTENTION_PICK_UP;
 import static com.l2jserver.gameserver.ai.CtrlIntention.AI_INTENTION_REST;
 import static com.l2jserver.gameserver.config.Configuration.geodata;
-import static com.l2jserver.gameserver.model.skills.targets.AffectScope.PARTY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -53,7 +52,6 @@ import com.l2jserver.gameserver.model.effects.L2EffectType;
 import com.l2jserver.gameserver.model.events.EventDispatcher;
 import com.l2jserver.gameserver.model.events.impl.character.npc.OnNpcMoveFinished;
 import com.l2jserver.gameserver.model.interfaces.ILocational;
-import com.l2jserver.gameserver.model.items.L2Weapon;
 import com.l2jserver.gameserver.model.items.instance.L2ItemInstance;
 import com.l2jserver.gameserver.model.items.type.WeaponType;
 import com.l2jserver.gameserver.model.skills.Skill;
@@ -64,7 +62,7 @@ import com.l2jserver.gameserver.taskmanager.AttackStanceTaskManager;
 import com.l2jserver.gameserver.util.Util;
 
 /**
- * Creatures AI.
+ * Creature AI.
  */
 public class L2CharacterAI extends AbstractAI {
 	public static class IntentionCommand {
@@ -428,7 +426,7 @@ public class L2CharacterAI extends AbstractAI {
 		// Stop the actor auto-attack client side by sending Server->Client packet AutoAttackStop (broadcast)
 		clientStopAutoAttack();
 		
-		if ((object instanceof L2ItemInstance) && (((L2ItemInstance) object).getItemLocation() != ItemLocation.VOID)) {
+		if ((object instanceof L2ItemInstance item) && (item.getItemLocation() != ItemLocation.VOID)) {
 			return;
 		}
 		
@@ -489,20 +487,14 @@ public class L2CharacterAI extends AbstractAI {
 		}
 	}
 	
-	/**
-	 * Do nothing.
-	 */
 	@Override
 	protected void onEvtThink() {
-		// do nothing
+		// Do nothing.
 	}
 	
-	/**
-	 * Do nothing.
-	 */
 	@Override
 	protected void onEvtAggression(L2Character target, long aggro) {
-		// do nothing
+		// Do nothing.
 	}
 	
 	/**
@@ -612,12 +604,9 @@ public class L2CharacterAI extends AbstractAI {
 		onEvtAttacked(attacker);
 	}
 	
-	/**
-	 * Do nothing.
-	 */
 	@Override
 	protected void onEvtEvaded(L2Character attacker) {
-		// do nothing
+		// Do nothing.
 	}
 	
 	/**
@@ -633,12 +622,9 @@ public class L2CharacterAI extends AbstractAI {
 		onEvtThink();
 	}
 	
-	/**
-	 * Do nothing.
-	 */
 	@Override
 	protected void onEvtUserCmd(Object arg0, Object arg1) {
-		// do nothing
+		// Do nothing.
 	}
 	
 	/**
@@ -660,6 +646,7 @@ public class L2CharacterAI extends AbstractAI {
 		if (_actor instanceof L2Attackable attackable) {
 			attackable.setisReturningToSpawnPoint(false);
 		}
+		
 		clientStoppedMoving();
 		
 		if (_actor instanceof L2Npc npc) {
@@ -850,12 +837,9 @@ public class L2CharacterAI extends AbstractAI {
 		setAttackTarget(null);
 	}
 	
-	/**
-	 * Do nothing.
-	 */
 	@Override
 	protected void onEvtFinishCasting() {
-		// do nothing
+		// Do nothing.
 	}
 	
 	@Override
@@ -1085,18 +1069,16 @@ public class L2CharacterAI extends AbstractAI {
 	 * @return True if the target is lost
 	 */
 	protected boolean checkTargetLost(L2Object target) {
-		// check if player is fake death
-		if (target instanceof L2PcInstance targetPlayer) {
-			if (targetPlayer.isFakeDeath()) {
-				targetPlayer.stopFakeDeath(true);
-				return false;
-			}
-		}
 		if (target == null) {
-			// Set the Intention of this AbstractAI to AI_INTENTION_ACTIVE
 			setIntention(AI_INTENTION_ACTIVE);
 			return true;
 		}
+		
+		if (target instanceof L2PcInstance player && player.isFakeDeath()) {
+			player.stopFakeDeath(true);
+			return false;
+		}
+		
 		if ((_actor != null) && (_skill != null) && _skill.isBad() && (_skill.getAffectRange() > 0) && !GeoData.getInstance().canSeeTarget(_actor, target)) {
 			setIntention(AI_INTENTION_ACTIVE);
 			return true;
@@ -1253,7 +1235,7 @@ public class L2CharacterAI extends AbstractAI {
 			} else if (((target.getPAtk(null) * 0.8) < target.getMAtk(null, null)) || ((target.getMAtk(null, null) * 0.8) > target.getPAtk(null))) {
 				isBalanced = true;
 			} else {
-				L2Weapon weapon = target.getActiveWeaponItem();
+				final var weapon = target.getActiveWeaponItem();
 				if ((weapon != null) && ((weapon.getItemType() == WeaponType.BOW) || (weapon.getItemType() == WeaponType.CROSSBOW))) {
 					isArcher = true;
 				} else {
@@ -1269,44 +1251,5 @@ public class L2CharacterAI extends AbstractAI {
 				isCanceled = true;
 			}
 		}
-	}
-	
-	@Deprecated
-	public boolean canAura(Skill sk) {
-		// TODO(Zoey76): Handle scope RANGE skills, include Geodata check and distance.
-		return false;
-	}
-	
-	@Deprecated
-	public boolean canAOE(Skill sk) {
-		// TODO(Zoey76): Handle scope RANGE skills, include Geodata check and distance.
-		return false;
-	}
-	
-	public boolean canParty(Skill sk) {
-		if (isParty(sk)) {
-			int count = 0;
-			int ccount = 0;
-			final var actors = ((L2Npc) _actor);
-			for (L2Character target : _actor.getKnownList().getKnownCharactersInRadius(sk.getAffectRange())) {
-				if (!(target instanceof L2Attackable targets) || !GeoData.getInstance().canSeeTarget(_actor, target)) {
-					continue;
-				}
-				if (targets.isInMyClan(actors)) {
-					count++;
-					if (target.isAffectedBySkill(sk.getId())) {
-						ccount++;
-					}
-				}
-			}
-			if (ccount < count) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	public boolean isParty(Skill sk) {
-		return sk.getAffectScope() == PARTY;
 	}
 }

@@ -21,7 +21,6 @@ package com.l2jserver.gameserver.model.skills.targets;
 import static com.l2jserver.gameserver.model.zone.ZoneId.SIEGE;
 import static java.util.Comparator.comparingDouble;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +67,7 @@ public enum AffectScope {
 			
 			final var affectLimit = skill.getAffectLimit();
 			final var affectObject = skill.getAffectObject();
-			final var targets = new ArrayList<L2Object>();
+			final var targets = new LinkedList<L2Object>();
 			final var inDuel = player.isInDuel();
 			for (var object : L2World.getInstance().getVisibleObjects(target, skill.getAffectRange())) {
 				if ((affectLimit > 0) && (targets.size() >= affectLimit)) {
@@ -139,8 +138,8 @@ public enum AffectScope {
 			final var player = target.getActingPlayer();
 			final var affectLimit = skill.getAffectLimit();
 			final var affectObject = skill.getAffectObject();
-			final var targets = new ArrayList<L2Object>();
-			for (L2Object object : L2World.getInstance().getVisibleObjects(target, skill.getAffectRange())) {
+			final var targets = new LinkedList<L2Object>();
+			for (var object : L2World.getInstance().getVisibleObjects(target, skill.getAffectRange())) {
 				if ((affectLimit > 0) && (targets.size() >= affectLimit)) {
 					break;
 				}
@@ -178,7 +177,7 @@ public enum AffectScope {
 			final var fanRadius = fanRange[2];
 			final var fanAngle = fanRange[3];
 			final var affectObject = skill.getAffectObject();
-			final var targets = new ArrayList<L2Object>();
+			final var targets = new LinkedList<L2Object>();
 			for (var object : L2World.getInstance().getVisibleObjects(caster, fanRadius)) {
 				if ((affectLimit > 0) && (targets.size() >= affectLimit)) {
 					break;
@@ -227,7 +226,7 @@ public enum AffectScope {
 			
 			final var affectLimit = skill.getAffectLimit();
 			final var affectRange = skill.getAffectRange();
-			final var targets = new ArrayList<L2Object>();
+			final var targets = new LinkedList<L2Object>();
 			final var creature = (L2Character) target;
 			if (creature.isInParty()) {
 				for (var partyMember : creature.getParty().getMembers()) {
@@ -279,7 +278,7 @@ public enum AffectScope {
 		public List<L2Object> affectTargets(L2Character caster, L2Object target, Skill skill) {
 			final var affectRange = skill.getAffectRange();
 			final var affectLimit = skill.getAffectLimit();
-			final var targets = new ArrayList<L2Object>();
+			final var targets = new LinkedList<L2Object>();
 			if (target.isPlayer()) {
 				final var targetPlayer = target.getActingPlayer();
 				final var clan = targetPlayer.getClan();

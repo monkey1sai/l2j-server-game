@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.l2jserver.gameserver.data.xml.impl.NpcData;
-import com.l2jserver.gameserver.enums.AISkillScope;
 import com.l2jserver.gameserver.enums.AIType;
 import com.l2jserver.gameserver.enums.Race;
 import com.l2jserver.gameserver.enums.Sex;
@@ -88,7 +87,6 @@ public final class L2NpcTemplate extends L2CharTemplate implements IIdentifiable
 	private int _minSkillChance;
 	private int _maxSkillChance;
 	private Map<Integer, Skill> _skills;
-	private Map<AISkillScope, List<Skill>> _aiSkillLists;
 	private Set<Integer> _clans;
 	private Set<Integer> _ignoreClanNpcIds;
 	private Map<DropListScope, List<IDropItem>> _dropLists;
@@ -336,14 +334,6 @@ public final class L2NpcTemplate extends L2CharTemplate implements IIdentifiable
 	
 	public void setSkills(Map<Integer, Skill> skills) {
 		_skills = skills != null ? Collections.unmodifiableMap(skills) : Collections.emptyMap();
-	}
-	
-	public List<Skill> getAISkills(AISkillScope aiSkillScope) {
-		return _aiSkillLists.getOrDefault(aiSkillScope, Collections.emptyList());
-	}
-	
-	public void setAISkillLists(Map<AISkillScope, List<Skill>> aiSkillLists) {
-		_aiSkillLists = aiSkillLists != null ? Collections.unmodifiableMap(aiSkillLists) : Collections.emptyMap();
 	}
 	
 	public Set<Integer> getClans() {

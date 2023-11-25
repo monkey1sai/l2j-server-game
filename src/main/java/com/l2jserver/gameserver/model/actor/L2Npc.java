@@ -28,7 +28,6 @@ import static com.l2jserver.gameserver.enums.InstanceType.L2Npc;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,7 +43,6 @@ import com.l2jserver.gameserver.cache.HtmCache;
 import com.l2jserver.gameserver.data.xml.impl.NpcData;
 import com.l2jserver.gameserver.datatables.ItemTable;
 import com.l2jserver.gameserver.datatables.NpcPersonalAIData;
-import com.l2jserver.gameserver.enums.AISkillScope;
 import com.l2jserver.gameserver.enums.AIType;
 import com.l2jserver.gameserver.enums.PrivateStoreType;
 import com.l2jserver.gameserver.enums.Race;
@@ -210,14 +208,6 @@ public class L2Npc extends L2Character {
 	
 	public boolean isChaos() {
 		return getTemplate().isChaos();
-	}
-	
-	public List<Skill> getLongRangeSkills() {
-		return getTemplate().getAISkills(AISkillScope.LONG_RANGE);
-	}
-	
-	public List<Skill> getShortRangeSkills() {
-		return getTemplate().getAISkills(AISkillScope.SHORT_RANGE);
 	}
 	
 	/** Task launching the function onRandomAnimation() */

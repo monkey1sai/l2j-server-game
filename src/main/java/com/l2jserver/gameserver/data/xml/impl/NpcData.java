@@ -40,7 +40,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 import com.l2jserver.gameserver.datatables.SkillData;
-import com.l2jserver.gameserver.enums.AISkillScope;
 import com.l2jserver.gameserver.model.StatsSet;
 import com.l2jserver.gameserver.model.actor.templates.L2NpcTemplate;
 import com.l2jserver.gameserver.model.base.ClassId;
@@ -48,7 +47,6 @@ import com.l2jserver.gameserver.model.drops.DropListScope;
 import com.l2jserver.gameserver.model.drops.GeneralDropItem;
 import com.l2jserver.gameserver.model.drops.GroupedGeneralDropItem;
 import com.l2jserver.gameserver.model.drops.IDropItem;
-import com.l2jserver.gameserver.model.effects.L2EffectType;
 import com.l2jserver.gameserver.model.holders.MinionHolder;
 import com.l2jserver.gameserver.model.holders.SkillHolder;
 import com.l2jserver.gameserver.model.skills.Skill;
@@ -353,7 +351,7 @@ public class NpcData implements IXmlReader {
 							}
 						}
 						
-						L2NpcTemplate template = _npcs.get(npcId);
+						var template = _npcs.get(npcId);
 						if (template == null) {
 							template = new L2NpcTemplate(set);
 							_npcs.put(template.getId(), template);
@@ -375,76 +373,9 @@ public class NpcData implements IXmlReader {
 							template.setParameters(StatsSet.EMPTY_STATSET);
 						}
 						
-						if (skills != null) {
-							Map<AISkillScope, List<Skill>> aiSkillLists = null;
-							for (Skill skill : skills.values()) {
-								if (skill.isPassive()) {
-									continue;
-								}
-								
-								if (aiSkillLists == null) {
-									aiSkillLists = new EnumMap<>(AISkillScope.class);
-								}
-								
-								final List<AISkillScope> aiSkillScopes = new ArrayList<>();
-								final AISkillScope shortOrLongRangeScope = skill.getCastRange() <= 150 ? AISkillScope.SHORT_RANGE : AISkillScope.LONG_RANGE;
-								if (skill.isSuicideAttack()) {
-									aiSkillScopes.add(AISkillScope.SUICIDE);
-								} else {
-									aiSkillScopes.add(AISkillScope.GENERAL);
-									
-									if (skill.isContinuous()) {
-										if (!skill.isDebuff()) {
-											aiSkillScopes.add(AISkillScope.BUFF);
-										} else {
-											aiSkillScopes.add(AISkillScope.DEBUFF);
-											aiSkillScopes.add(AISkillScope.COT);
-											aiSkillScopes.add(shortOrLongRangeScope);
-										}
-									} else {
-										if (skill.hasEffectType(L2EffectType.DISPEL)) {
-											aiSkillScopes.add(AISkillScope.NEGATIVE);
-											aiSkillScopes.add(shortOrLongRangeScope);
-										} else if (skill.hasEffectType(L2EffectType.HP)) {
-											aiSkillScopes.add(AISkillScope.HEAL);
-										} else if (skill.hasEffectType(L2EffectType.PHYSICAL_ATTACK, L2EffectType.MAGICAL_ATTACK, L2EffectType.HP_DRAIN)) {
-											aiSkillScopes.add(AISkillScope.ATTACK);
-											aiSkillScopes.add(AISkillScope.UNIVERSAL);
-											aiSkillScopes.add(shortOrLongRangeScope);
-										} else if (skill.hasEffectType(L2EffectType.SLEEP)) {
-											aiSkillScopes.add(AISkillScope.IMMOBILIZE);
-										} else if (skill.hasEffectType(L2EffectType.STUN, L2EffectType.ROOT)) {
-											aiSkillScopes.add(AISkillScope.IMMOBILIZE);
-											aiSkillScopes.add(shortOrLongRangeScope);
-										} else if (skill.hasEffectType(L2EffectType.MUTE, L2EffectType.FEAR)) {
-											aiSkillScopes.add(AISkillScope.COT);
-											aiSkillScopes.add(shortOrLongRangeScope);
-										} else if (skill.hasEffectType(L2EffectType.DMG_OVER_TIME)) {
-											aiSkillScopes.add(shortOrLongRangeScope);
-										} else if (skill.hasEffectType(L2EffectType.RESURRECTION)) {
-											aiSkillScopes.add(AISkillScope.RES);
-										} else {
-											aiSkillScopes.add(AISkillScope.UNIVERSAL);
-										}
-									}
-								}
-								
-								for (AISkillScope aiSkillScope : aiSkillScopes) {
-									List<Skill> aiSkills = aiSkillLists.computeIfAbsent(aiSkillScope, k -> new ArrayList<>());
-									aiSkills.add(skill);
-								}
-							}
-							
-							template.setSkills(skills);
-							template.setAISkillLists(aiSkillLists);
-						} else {
-							template.setSkills(null);
-							template.setAISkillLists(null);
-						}
-						
+						template.setSkills(skills);
 						template.setClans(clans);
 						template.setIgnoreClanNpcIds(ignoreClanNpcIds);
-						
 						template.setDropLists(dropLists);
 					}
 				}

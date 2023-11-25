@@ -376,18 +376,6 @@ public enum TargetType {
 			}
 			return target;
 		}
-	},
-	@Deprecated
-	ONE {
-		@Override
-		public L2Object getTarget(Skill skill, L2Character caster, L2Object target) {
-			// TODO(Zoey76): Remove custom target type.
-			if (caster.isPlayable()) {
-				LOG.warn("Outdated {} with target type {} used on {} by {}!", skill, skill.getTargetType(), target, caster);
-			}
-			skill.updateTargetSystem(TARGET, AffectScope.SINGLE, AffectObjectStaticImpl.ALL);
-			return TARGET.getTarget(skill, caster, target);
-		}
 	};
 	
 	public static final L2Object[] EMPTY_TARGET_LIST = new L2Object[0];
