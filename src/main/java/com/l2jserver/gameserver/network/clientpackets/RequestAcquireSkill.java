@@ -19,7 +19,7 @@
 package com.l2jserver.gameserver.network.clientpackets;
 
 import static com.l2jserver.gameserver.config.Configuration.character;
-import static com.l2jserver.gameserver.model.base.AcquireSkillType.SUBPLEDGE;
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.SUBPLEDGE;
 import static com.l2jserver.gameserver.network.SystemMessageId.ACQUIRE_SKILL_FAILED_BAD_CLAN_REP_SCORE;
 import static com.l2jserver.gameserver.network.SystemMessageId.ITEM_OR_PREREQUISITES_MISSING_TO_LEARN_SKILL;
 import static com.l2jserver.gameserver.network.SystemMessageId.LEARNED_SKILL_S1;
@@ -44,11 +44,10 @@ import com.l2jserver.gameserver.model.L2SkillLearn;
 import com.l2jserver.gameserver.model.actor.L2Npc;
 import com.l2jserver.gameserver.model.actor.instance.L2NpcInstance;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
-import com.l2jserver.gameserver.model.actor.instance.L2VillageMasterInstance;
-import com.l2jserver.gameserver.model.base.AcquireSkillType;
 import com.l2jserver.gameserver.model.events.EventDispatcher;
 import com.l2jserver.gameserver.model.events.impl.character.player.PlayerSkillLearned;
 import com.l2jserver.gameserver.model.skills.CommonSkill;
+import com.l2jserver.gameserver.model.skills.LearnSkillType;
 import com.l2jserver.gameserver.model.skills.Skill;
 import com.l2jserver.gameserver.network.SystemMessageId;
 import com.l2jserver.gameserver.network.serverpackets.AcquireSkillDone;
@@ -78,14 +77,14 @@ public final class RequestAcquireSkill extends L2GameClientPacket {
 	
 	private int _id;
 	private int _level;
-	private AcquireSkillType _skillType;
+	private LearnSkillType _skillType;
 	private int _subType;
 	
 	@Override
 	protected void readImpl() {
 		_id = readD();
 		_level = readD();
-		_skillType = AcquireSkillType.getAcquireSkillType(readD());
+		_skillType = LearnSkillType.getAcquireSkillType(readD());
 		if (_skillType == SUBPLEDGE) {
 			_subType = readD();
 		}
@@ -160,7 +159,7 @@ public final class RequestAcquireSkill extends L2GameClientPacket {
 							if (!activeChar.destroyItemByItemId("Consume", item.getId(), item.getCount(), trainer, false)) {
 								// Doesn't have required item.
 								activeChar.sendPacket(ITEM_OR_PREREQUISITES_MISSING_TO_LEARN_SKILL);
-								L2VillageMasterInstance.showPledgeSkillList(activeChar);
+								// TODO(Zoey76): L2VillageMasterInstance.showPledgeSkillList(activeChar);
 								return;
 							}
 							
@@ -183,10 +182,10 @@ public final class RequestAcquireSkill extends L2GameClientPacket {
 					
 					activeChar.sendPacket(new AcquireSkillDone());
 					
-					L2VillageMasterInstance.showPledgeSkillList(activeChar);
+					// TODO(Zoey76): L2VillageMasterInstance.showPledgeSkillList(activeChar);
 				} else {
 					activeChar.sendPacket(ACQUIRE_SKILL_FAILED_BAD_CLAN_REP_SCORE);
-					L2VillageMasterInstance.showPledgeSkillList(activeChar);
+					// TODO(Zoey76): L2VillageMasterInstance.showPledgeSkillList(activeChar);
 				}
 			}
 			case SUBPLEDGE -> {

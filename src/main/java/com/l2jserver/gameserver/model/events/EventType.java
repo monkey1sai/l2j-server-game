@@ -87,6 +87,9 @@ import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerCl
 import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanLeaderChange;
 import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanLeave;
 import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanLevelUp;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerCreateSubPledge;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanDismiss;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerRevivePledge;
 import com.l2jserver.gameserver.model.events.impl.character.player.clanwh.PlayerClanWHItemAdd;
 import com.l2jserver.gameserver.model.events.impl.character.player.clanwh.PlayerClanWHItemDestroy;
 import com.l2jserver.gameserver.model.events.impl.character.player.clanwh.PlayerClanWHItemTransfer;
@@ -198,6 +201,9 @@ public enum EventType {
 	PLAYER_CLAN_LEADER_CHANGE(PlayerClanLeaderChange.class, void.class),
 	PLAYER_CLAN_LEAVE(PlayerClanLeave.class, void.class),
 	PLAYER_CLAN_LEVEL_UP(PlayerClanLevelUp.class, void.class),
+	PLAYER_CLAN_DISMISS(PlayerClanDismiss.class, void.class),
+	PLAYER_REVIVE_PLEDGE(PlayerRevivePledge.class, void.class),
+	PLAYER_CREATE_SUBPLEDGE(PlayerCreateSubPledge.class, void.class),
 	// Clan warehouse events
 	PLAYER_CLAN_WH_ITEM_ADD(PlayerClanWHItemAdd.class, void.class),
 	PLAYER_CLAN_WH_ITEM_DESTROY(PlayerClanWHItemDestroy.class, void.class),

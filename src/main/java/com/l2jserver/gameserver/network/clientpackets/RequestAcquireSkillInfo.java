@@ -18,6 +18,10 @@
  */
 package com.l2jserver.gameserver.network.clientpackets;
 
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.PLEDGE;
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.SUBPLEDGE;
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.TRANSFER;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +29,7 @@ import com.l2jserver.gameserver.data.xml.impl.SkillTreesData;
 import com.l2jserver.gameserver.datatables.SkillData;
 import com.l2jserver.gameserver.model.ClanPrivilege;
 import com.l2jserver.gameserver.model.actor.instance.L2NpcInstance;
-import com.l2jserver.gameserver.model.base.AcquireSkillType;
+import com.l2jserver.gameserver.model.skills.LearnSkillType;
 import com.l2jserver.gameserver.network.serverpackets.AcquireSkillInfo;
 
 /**
@@ -40,13 +44,13 @@ public final class RequestAcquireSkillInfo extends L2GameClientPacket {
 	
 	private int _id;
 	private int _level;
-	private AcquireSkillType _skillType;
+	private LearnSkillType _skillType;
 	
 	@Override
 	protected void readImpl() {
 		_id = readD();
 		_level = readD();
-		_skillType = AcquireSkillType.getAcquireSkillType(readD());
+		_skillType = LearnSkillType.getAcquireSkillType(readD());
 	}
 	
 	@Override
@@ -78,7 +82,7 @@ public final class RequestAcquireSkillInfo extends L2GameClientPacket {
 		
 		// Hack check. Doesn't apply to all Skill Types
 		final int prevSkillLevel = activeChar.getSkillLevel(_id);
-		if ((prevSkillLevel > 0) && !((_skillType == AcquireSkillType.TRANSFER) || (_skillType == AcquireSkillType.SUBPLEDGE))) {
+		if ((prevSkillLevel > 0) && !((_skillType == TRANSFER) || (_skillType == SUBPLEDGE))) {
 			if (prevSkillLevel == _level) {
 				LOG.warn("Player {} is requesting info for a skill that already knows, Id: {} level: {}!", activeChar, _id, _level);
 			} else if (prevSkillLevel != (_level - 1)) {
@@ -86,11 +90,11 @@ public final class RequestAcquireSkillInfo extends L2GameClientPacket {
 			}
 		}
 		
-		if ((_skillType == AcquireSkillType.PLEDGE) && !activeChar.isClanLeader()) {
+		if ((_skillType == PLEDGE) && !activeChar.isClanLeader()) {
 			return;
 		}
 		
-		if ((_skillType == AcquireSkillType.SUBPLEDGE) && (!activeChar.isClanLeader() || !activeChar.hasClanPrivilege(ClanPrivilege.CL_TROOPS_FAME))) {
+		if ((_skillType == SUBPLEDGE) && (!activeChar.isClanLeader() || !activeChar.hasClanPrivilege(ClanPrivilege.CL_TROOPS_FAME))) {
 			return;
 		}
 		

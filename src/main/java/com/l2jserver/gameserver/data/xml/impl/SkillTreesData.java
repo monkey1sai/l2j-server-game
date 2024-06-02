@@ -43,7 +43,6 @@ import com.l2jserver.gameserver.model.L2Clan;
 import com.l2jserver.gameserver.model.L2SkillLearn;
 import com.l2jserver.gameserver.model.StatsSet;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
-import com.l2jserver.gameserver.model.base.AcquireSkillType;
 import com.l2jserver.gameserver.model.base.ClassId;
 import com.l2jserver.gameserver.model.base.SocialClass;
 import com.l2jserver.gameserver.model.base.SubClass;
@@ -52,6 +51,7 @@ import com.l2jserver.gameserver.model.holders.PlayerSkillHolder;
 import com.l2jserver.gameserver.model.holders.SkillHolder;
 import com.l2jserver.gameserver.model.interfaces.ISkillsHolder;
 import com.l2jserver.gameserver.model.skills.CommonSkill;
+import com.l2jserver.gameserver.model.skills.LearnSkillType;
 import com.l2jserver.gameserver.model.skills.Skill;
 import com.l2jserver.gameserver.util.IXmlReader;
 
@@ -695,7 +695,7 @@ public final class SkillTreesData implements IXmlReader {
 	 * @param player the player learning the skill
 	 * @return the skill learn for the specified parameters
 	 */
-	public L2SkillLearn getSkillLearn(AcquireSkillType skillType, int id, int lvl, L2PcInstance player) {
+	public L2SkillLearn getSkillLearn(LearnSkillType skillType, int id, int lvl, L2PcInstance player) {
 		return switch (skillType) {
 			case CLASS -> getClassSkill(id, lvl, player.getLearningClass());
 			case TRANSFORM -> getTransformSkill(id, lvl);

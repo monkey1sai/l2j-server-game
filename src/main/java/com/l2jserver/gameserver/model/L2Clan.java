@@ -219,7 +219,6 @@ public class L2Clan implements IIdentifiable, INamable {
 			}
 			exLeader.getClanPrivileges().clear();
 			exLeader.broadcastUserInfo();
-			
 		} else {
 			try (var con = ConnectionFactory.getInstance().getConnection();
 				var ps = con.prepareStatement("UPDATE characters SET clan_privs = ? WHERE charId = ?")) {
@@ -1442,6 +1441,15 @@ public class L2Clan implements IIdentifiable, INamable {
 	 */
 	public final SubPledge[] getAllSubPledges() {
 		return _subPledges.values().toArray(new SubPledge[0]);
+	}
+	
+	/**
+	 * Checks if the current clan has a sub-pledge of the specified type.
+	 * @param pledgeType the type of the sub-pledge to check for
+	 * @return {@code true} if a sub-pledge of the specified type exists, {@code false} otherwise
+	 */
+	public boolean hasSubPledge(int pledgeType) {
+		return _subPledges.containsKey(pledgeType);
 	}
 	
 	public SubPledge createSubPledge(L2PcInstance player, int pledgeType, int leaderId, String subPledgeName) {

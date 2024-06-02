@@ -2292,6 +2292,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	public void showPage(L2PcInstance player, String fileName, boolean haveQuest) {
 		var content = getHtm(player.getHtmlPrefix(), fileName);
 		if (content == null) {
+			LOG.warn("Player {} requested inexistent {} file!", player, fileName);
 			return;
 		}
 		
@@ -2365,13 +2366,19 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	}
 	
 	/**
+	 * Gets the htm content.
 	 * @param prefix player's language prefix
 	 * @param fileName the html file to get
 	 * @return the HTML file contents
 	 */
 	public String getHtm(String prefix, String fileName) {
-		final var path = fileName.startsWith("data/") ? fileName : getClass().getPackageName().replace('.', '/') + "/" + fileName;
-		return HtmCache.getInstance().getHtm(prefix, path);
+		// Try html location first, then script location.
+		var content = HtmCache.getInstance().getHtm(prefix, fileName);
+		if (content == null) {
+			final var path = getClass().getPackageName().replace('.', '/') + "/" + fileName;
+			content = HtmCache.getInstance().getHtm(prefix, path);
+		}
+		return content;
 	}
 	
 	public int[] getRegisteredItemIds() {

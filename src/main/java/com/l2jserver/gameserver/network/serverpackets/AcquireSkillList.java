@@ -18,12 +18,12 @@
  */
 package com.l2jserver.gameserver.network.serverpackets;
 
-import static com.l2jserver.gameserver.model.base.AcquireSkillType.SUBPLEDGE;
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.SUBPLEDGE;
 
 import java.util.List;
 
 import com.l2jserver.gameserver.model.L2SkillLearn;
-import com.l2jserver.gameserver.model.base.AcquireSkillType;
+import com.l2jserver.gameserver.model.skills.LearnSkillType;
 
 /**
  * Acquire Skill List server packet implementation.
@@ -31,9 +31,9 @@ import com.l2jserver.gameserver.model.base.AcquireSkillType;
  */
 public final class AcquireSkillList extends L2GameServerPacket {
 	private final List<L2SkillLearn> skills;
-	private final AcquireSkillType skillType;
+	private final LearnSkillType skillType;
 	
-	public AcquireSkillList(AcquireSkillType type, List<L2SkillLearn> skills) {
+	public AcquireSkillList(LearnSkillType type, List<L2SkillLearn> skills) {
 		this.skillType = type;
 		this.skills = skills;
 	}

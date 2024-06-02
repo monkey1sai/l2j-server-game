@@ -115,8 +115,6 @@ import com.l2jserver.gameserver.model.actor.templates.L2NpcTemplate;
 import com.l2jserver.gameserver.model.drops.GeneralDropItem;
 import com.l2jserver.gameserver.model.drops.GroupedGeneralDropItem;
 import com.l2jserver.gameserver.model.drops.IDropItem;
-import com.l2jserver.gameserver.model.entity.Castle;
-import com.l2jserver.gameserver.model.entity.Fort;
 import com.l2jserver.gameserver.model.entity.Instance;
 import com.l2jserver.gameserver.model.events.annotations.Id;
 import com.l2jserver.gameserver.model.events.annotations.Ids;
@@ -1235,36 +1233,36 @@ public abstract class AbstractScript implements INamable {
 	 * @return
 	 */
 	protected final List<AbstractEventListener> registerListener(Function<ListenersContainer, AbstractEventListener> action, ListenerRegisterType registerType, int... ids) {
-		final List<AbstractEventListener> listeners = new ArrayList<>(ids.length > 0 ? ids.length : 1);
+		final var listeners = new LinkedList<AbstractEventListener>();
 		if (ids.length > 0) {
 			for (int id : ids) {
 				switch (registerType) {
 					case NPC -> {
-						final L2NpcTemplate template = NpcData.getInstance().getTemplate(id);
+						final var template = NpcData.getInstance().getTemplate(id);
 						if (template != null) {
 							listeners.add(template.addListener(action.apply(template)));
 						}
 					}
 					case ZONE -> {
-						final L2ZoneType template = ZoneManager.getInstance().getZoneById(id);
+						final var template = ZoneManager.getInstance().getZoneById(id);
 						if (template != null) {
 							listeners.add(template.addListener(action.apply(template)));
 						}
 					}
 					case ITEM -> {
-						final L2Item template = ItemTable.getInstance().getTemplate(id);
+						final var template = ItemTable.getInstance().getTemplate(id);
 						if (template != null) {
 							listeners.add(template.addListener(action.apply(template)));
 						}
 					}
 					case CASTLE -> {
-						final Castle template = CastleManager.getInstance().getCastleById(id);
+						final var template = CastleManager.getInstance().getCastleById(id);
 						if (template != null) {
 							listeners.add(template.addListener(action.apply(template)));
 						}
 					}
 					case FORTRESS -> {
-						final Fort template = FortManager.getInstance().getFortById(id);
+						final var template = FortManager.getInstance().getFortById(id);
 						if (template != null) {
 							listeners.add(template.addListener(action.apply(template)));
 						}
@@ -1272,31 +1270,21 @@ public abstract class AbstractScript implements INamable {
 					default -> LOG.warn("Unhandled register type {}", registerType);
 				}
 				
-				_registeredIds.putIfAbsent(registerType, ConcurrentHashMap.newKeySet(1));
+				_registeredIds.putIfAbsent(registerType, ConcurrentHashMap.newKeySet(ids.length));
 				_registeredIds.get(registerType).add(id);
 			}
 		} else {
-			switch (registerType) {
-				case OLYMPIAD -> {
-					final Olympiad template = Olympiad.getInstance();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL -> {
-					final ListenersContainer template = Containers.Global();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_NPCS -> {
-					final ListenersContainer template = Containers.Npcs();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_MONSTERS -> {
-					final ListenersContainer template = Containers.Monsters();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_PLAYERS -> {
-					final ListenersContainer template = Containers.Players();
-					listeners.add(template.addListener(action.apply(template)));
-				}
+			final var template = switch (registerType) {
+				case OLYMPIAD -> Olympiad.getInstance();
+				case GLOBAL -> Containers.Global();
+				case GLOBAL_NPCS -> Containers.Npcs();
+				case GLOBAL_MONSTERS -> Containers.Monsters();
+				case GLOBAL_PLAYERS -> Containers.Players();
+				default -> null;
+			};
+			
+			if (template != null) {
+				listeners.add(template.addListener(action.apply(template)));
 			}
 		}
 		
@@ -1312,72 +1300,8 @@ public abstract class AbstractScript implements INamable {
 	 * @return
 	 */
 	protected final List<AbstractEventListener> registerListener(Function<ListenersContainer, AbstractEventListener> action, ListenerRegisterType registerType, Collection<Integer> ids) {
-		final List<AbstractEventListener> listeners = new ArrayList<>(!ids.isEmpty() ? ids.size() : 1);
-		if (!ids.isEmpty()) {
-			for (int id : ids) {
-				switch (registerType) {
-					case NPC -> {
-						final L2NpcTemplate template = NpcData.getInstance().getTemplate(id);
-						if (template != null) {
-							listeners.add(template.addListener(action.apply(template)));
-						}
-					}
-					case ZONE -> {
-						final L2ZoneType template = ZoneManager.getInstance().getZoneById(id);
-						if (template != null) {
-							listeners.add(template.addListener(action.apply(template)));
-						}
-					}
-					case ITEM -> {
-						final L2Item template = ItemTable.getInstance().getTemplate(id);
-						if (template != null) {
-							listeners.add(template.addListener(action.apply(template)));
-						}
-					}
-					case CASTLE -> {
-						final Castle template = CastleManager.getInstance().getCastleById(id);
-						if (template != null) {
-							listeners.add(template.addListener(action.apply(template)));
-						}
-					}
-					case FORTRESS -> {
-						final Fort template = FortManager.getInstance().getFortById(id);
-						if (template != null) {
-							listeners.add(template.addListener(action.apply(template)));
-						}
-					}
-					default -> LOG.warn("Unhandled register type {}", registerType);
-				}
-			}
-			
-			_registeredIds.putIfAbsent(registerType, ConcurrentHashMap.newKeySet(ids.size()));
-			_registeredIds.get(registerType).addAll(ids);
-		} else {
-			switch (registerType) {
-				case OLYMPIAD -> {
-					final Olympiad template = Olympiad.getInstance();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL -> {
-					final ListenersContainer template = Containers.Global();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_NPCS -> {
-					final ListenersContainer template = Containers.Npcs();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_MONSTERS -> {
-					final ListenersContainer template = Containers.Monsters();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-				case GLOBAL_PLAYERS -> {
-					final ListenersContainer template = Containers.Players();
-					listeners.add(template.addListener(action.apply(template)));
-				}
-			}
-		}
-		_listeners.addAll(listeners);
-		return listeners;
+	    final var array = ids.stream().mapToInt(Integer::intValue).toArray();
+	    return registerListener(action, registerType, array);
 	}
 	
 	public Set<Integer> getRegisteredIds(ListenerRegisterType type) {

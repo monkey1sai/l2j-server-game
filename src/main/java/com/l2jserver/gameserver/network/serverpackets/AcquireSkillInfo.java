@@ -19,21 +19,22 @@
 package com.l2jserver.gameserver.network.serverpackets;
 
 import static com.l2jserver.gameserver.config.Configuration.character;
+import static com.l2jserver.gameserver.model.skills.CommonSkill.DIVINE_INSPIRATION;
+import static com.l2jserver.gameserver.model.skills.LearnSkillType.PLEDGE;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import com.l2jserver.gameserver.model.L2SkillLearn;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
-import com.l2jserver.gameserver.model.base.AcquireSkillType;
-import com.l2jserver.gameserver.model.skills.CommonSkill;
+import com.l2jserver.gameserver.model.skills.LearnSkillType;
 
 /**
  * Acquire Skill Info server packet implementation.
  * @author Zoey76
  */
 public class AcquireSkillInfo extends L2GameServerPacket {
-	private final AcquireSkillType type;
+	private final LearnSkillType type;
 	private final int id;
 	private final int level;
 	private final int cost;
@@ -48,16 +49,16 @@ public class AcquireSkillInfo extends L2GameServerPacket {
 	 * @param skillType the skill learning type
 	 * @param skillLearn the skill to learn
 	 */
-	public AcquireSkillInfo(L2PcInstance player, AcquireSkillType skillType, L2SkillLearn skillLearn) {
+	public AcquireSkillInfo(L2PcInstance player, LearnSkillType skillType, L2SkillLearn skillLearn) {
 		id = skillLearn.getSkillId();
 		level = skillLearn.getSkillLevel();
 		cost = skillLearn.getCalculatedLevelUpSp(player.getClassId(), player.getLearningClass());
 		type = skillType;
 		requirements = new LinkedList<>();
 		
-		if ((skillType != AcquireSkillType.PLEDGE) || character().lifeCrystalNeeded()) {
+		if ((skillType != PLEDGE) || character().lifeCrystalNeeded()) {
 			for (var item : skillLearn.getRequiredItems()) {
-				if (!character().divineInspirationSpBookNeeded() && (id == CommonSkill.DIVINE_INSPIRATION.getId())) {
+				if (!character().divineInspirationSpBookNeeded() && (id == DIVINE_INSPIRATION.getId())) {
 					continue;
 				}
 				requirements.add(new Requirements(99, item.getId(), item.getCount(), 50));

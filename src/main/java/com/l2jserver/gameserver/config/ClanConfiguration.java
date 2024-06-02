@@ -49,6 +49,12 @@ public interface ClanConfiguration extends Reloadable {
 	@ConverterClass(PatternConverter.class)
 	Pattern getClanNameTemplate();
 	
+	@Key("ClanNameMaximumLength")
+	Integer getClanNameMaximumLength();
+	
+	@Key("LeaderMinimumLevel")
+	Integer getLeaderMinimumLevel();
+	
 	@Key("TakeFortPoints")
 	Integer getTakeFortPoints();
 	

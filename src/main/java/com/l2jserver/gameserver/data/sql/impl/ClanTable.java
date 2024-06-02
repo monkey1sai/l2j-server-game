@@ -18,10 +18,35 @@
  */
 package com.l2jserver.gameserver.data.sql.impl;
 
+import static com.l2jserver.gameserver.config.Configuration.character;
+import static com.l2jserver.gameserver.config.Configuration.clan;
 import static com.l2jserver.gameserver.config.Configuration.general;
+import static com.l2jserver.gameserver.model.L2Clan.SUBUNIT_ACADEMY;
+import static com.l2jserver.gameserver.model.L2Clan.SUBUNIT_KNIGHT1;
+import static com.l2jserver.gameserver.model.L2Clan.SUBUNIT_ROYAL1;
+import static com.l2jserver.gameserver.model.zone.ZoneId.SIEGE;
+import static com.l2jserver.gameserver.network.SystemMessageId.ANOTHER_MILITARY_UNIT_IS_ALREADY_USING_THAT_NAME;
+import static com.l2jserver.gameserver.network.SystemMessageId.CANNOT_DISPERSE_THE_CLANS_IN_ALLY;
+import static com.l2jserver.gameserver.network.SystemMessageId.CANNOT_DISSOLVE_WHILE_IN_SIEGE;
+import static com.l2jserver.gameserver.network.SystemMessageId.CANNOT_DISSOLVE_WHILE_IN_WAR;
+import static com.l2jserver.gameserver.network.SystemMessageId.CANNOT_DISSOLVE_WHILE_OWNING_CLAN_HALL_OR_CASTLE;
+import static com.l2jserver.gameserver.network.SystemMessageId.CAPTAIN_OF_ORDER_OF_KNIGHTS_CANNOT_BE_APPOINTED;
+import static com.l2jserver.gameserver.network.SystemMessageId.CAPTAIN_OF_ROYAL_GUARD_CANNOT_BE_APPOINTED;
+import static com.l2jserver.gameserver.network.SystemMessageId.CLAN_CREATED;
+import static com.l2jserver.gameserver.network.SystemMessageId.CLAN_NAME_INCORRECT;
+import static com.l2jserver.gameserver.network.SystemMessageId.CLAN_NAME_TOO_LONG;
+import static com.l2jserver.gameserver.network.SystemMessageId.DISSOLUTION_IN_PROGRESS;
+import static com.l2jserver.gameserver.network.SystemMessageId.S1_ALREADY_EXISTS;
+import static com.l2jserver.gameserver.network.SystemMessageId.THE_KNIGHTS_OF_S1_HAVE_BEEN_CREATED;
+import static com.l2jserver.gameserver.network.SystemMessageId.THE_ROYAL_GUARD_OF_S1_HAVE_BEEN_CREATED;
+import static com.l2jserver.gameserver.network.SystemMessageId.THE_S1S_CLAN_ACADEMY_HAS_BEEN_CREATED;
+import static com.l2jserver.gameserver.network.SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT;
+import static com.l2jserver.gameserver.network.SystemMessageId.YOU_DO_NOT_MEET_CRITERIA_IN_ORDER_TO_CREATE_A_CLAN_ACADEMY;
+import static com.l2jserver.gameserver.network.SystemMessageId.YOU_DO_NOT_MEET_CRITERIA_IN_ORDER_TO_CREATE_A_MILITARY_UNIT;
+import static java.util.concurrent.TimeUnit.DAYS;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +58,7 @@ import com.l2jserver.commons.database.ConnectionFactory;
 import com.l2jserver.gameserver.ThreadPoolManager;
 import com.l2jserver.gameserver.idfactory.IdFactory;
 import com.l2jserver.gameserver.instancemanager.AuctionManager;
+import com.l2jserver.gameserver.instancemanager.CastleManager;
 import com.l2jserver.gameserver.instancemanager.ClanHallSiegeManager;
 import com.l2jserver.gameserver.instancemanager.FortManager;
 import com.l2jserver.gameserver.instancemanager.FortSiegeManager;
@@ -41,14 +67,12 @@ import com.l2jserver.gameserver.model.ClanPrivilege;
 import com.l2jserver.gameserver.model.L2Clan;
 import com.l2jserver.gameserver.model.L2ClanMember;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
-import com.l2jserver.gameserver.model.entity.Auction;
-import com.l2jserver.gameserver.model.entity.Fort;
-import com.l2jserver.gameserver.model.entity.FortSiege;
-import com.l2jserver.gameserver.model.entity.Siege;
-import com.l2jserver.gameserver.model.entity.clanhall.SiegableHall;
 import com.l2jserver.gameserver.model.events.EventDispatcher;
 import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanCreate;
 import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanDestroy;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerCreateSubPledge;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerClanDismiss;
+import com.l2jserver.gameserver.model.events.impl.character.player.clan.PlayerRevivePledge;
 import com.l2jserver.gameserver.model.events.impl.clan.ClanWarFinish;
 import com.l2jserver.gameserver.model.events.impl.clan.ClanWarStart;
 import com.l2jserver.gameserver.network.SystemMessageId;
@@ -67,13 +91,9 @@ public class ClanTable {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(ClanTable.class);
 	
-	public static final int CLAN_NAME_MAX_LENGTH = 16;
-	
 	private final Map<Integer, L2Clan> _clans = new ConcurrentHashMap<>();
 	
 	protected ClanTable() {
-		L2Clan clan;
-		// Count the clans
 		int clanCount = 0;
 		try (var con = ConnectionFactory.getInstance().getConnection();
 			var s = con.createStatement();
@@ -81,7 +101,7 @@ public class ClanTable {
 			while (rs.next()) {
 				int clanId = rs.getInt("clan_id");
 				_clans.put(clanId, new L2Clan(clanId));
-				clan = getClan(clanId);
+				final var clan = getClan(clanId);
 				if (clan.getDissolvingExpiryTime() != 0) {
 					scheduleRemoveClan(clan.getId());
 				}
@@ -134,28 +154,32 @@ public class ClanTable {
 			LOG.info("{} requested a clan creation.", player);
 		}
 		
-		if (10 > player.getLevel()) {
+		if (player.getLevel() < clan().getLeaderMinimumLevel()) {
 			player.sendPacket(SystemMessageId.YOU_DO_NOT_MEET_CRITERIA_IN_ORDER_TO_CREATE_A_CLAN);
 			return null;
 		}
-		if (0 != player.getClanId()) {
+		
+		if (player.getClanId() != 0) {
 			player.sendPacket(SystemMessageId.FAILED_TO_CREATE_CLAN);
 			return null;
 		}
+		
 		if (System.currentTimeMillis() < player.getClanCreateExpiryTime()) {
 			player.sendPacket(SystemMessageId.YOU_MUST_WAIT_XX_DAYS_BEFORE_CREATING_A_NEW_CLAN);
 			return null;
 		}
-		if (clanName.length() < 2) {
+		
+		if (!clan().getClanNameTemplate().matcher(clanName).matches()) {
 			player.sendPacket(SystemMessageId.CLAN_NAME_INCORRECT);
 			return null;
 		}
-		if (clanName.length() > CLAN_NAME_MAX_LENGTH) {
+		
+		if (clanName.length() > clan().getClanNameMaximumLength()) {
 			player.sendPacket(SystemMessageId.CLAN_NAME_TOO_LONG);
 			return null;
 		}
 		
-		if (null != getClanByName(clanName)) {
+		if (getClanByName(clanName) != null) {
 			SystemMessage sm = SystemMessage.getSystemMessage(SystemMessageId.S1_ALREADY_EXISTS);
 			sm.addString(clanName);
 			player.sendPacket(sm);
@@ -183,51 +207,51 @@ public class ClanTable {
 		player.sendPacket(SystemMessageId.CLAN_CREATED);
 		
 		// Notify to scripts
-		EventDispatcher.getInstance().notifyEventAsync(new PlayerClanCreate(player, clan));
+		EventDispatcher.getInstance().notifyEventAsync(new PlayerClanCreate(player, clan), player.getLastFolkNPC());
 		return clan;
 	}
 	
 	public synchronized void destroyClan(int clanId) {
-		L2Clan clan = getClan(clanId);
+		final var clan = getClan(clanId);
 		if (clan == null) {
 			return;
 		}
 		
 		clan.broadcastToOnlineMembers(SystemMessage.getSystemMessage(SystemMessageId.CLAN_HAS_DISPERSED));
-		int castleId = clan.getCastleId();
+		final var castleId = clan.getCastleId();
 		if (castleId == 0) {
-			for (Siege siege : SiegeManager.getInstance().getSieges()) {
+			for (var siege : SiegeManager.getInstance().getSieges()) {
 				siege.removeSiegeClan(clan);
 			}
 		}
 		
-		int fortId = clan.getFortId();
+		final var fortId = clan.getFortId();
 		if (fortId == 0) {
-			for (FortSiege siege : FortSiegeManager.getInstance().getSieges()) {
+			for (var siege : FortSiegeManager.getInstance().getSieges()) {
 				siege.removeAttacker(clan);
 			}
 		}
 		
-		int hallId = clan.getHideoutId();
+		final var hallId = clan.getHideoutId();
 		if (hallId == 0) {
-			for (SiegableHall hall : ClanHallSiegeManager.getInstance().getConquerableHalls().values()) {
+			for (var hall : ClanHallSiegeManager.getInstance().getConquerableHalls().values()) {
 				hall.removeAttacker(clan);
 			}
 		}
 		
-		Auction auction = AuctionManager.getInstance().getAuction(clan.getAuctionBidAt());
+		final var auction = AuctionManager.getInstance().getAuction(clan.getAuctionBidAt());
 		if (auction != null) {
 			auction.cancelBid(clan.getId());
 		}
 		
-		L2ClanMember leaderMember = clan.getLeader();
+		final var leaderMember = clan.getLeader();
 		if (leaderMember == null) {
 			clan.getWarehouse().destroyAllItems("ClanRemove", null, null);
 		} else {
 			clan.getWarehouse().destroyAllItems("ClanRemove", clan.getLeader().getPlayerInstance(), null);
 		}
 		
-		for (L2ClanMember member : clan.getMembers()) {
+		for (var member : clan.getMembers()) {
 			clan.removeClanMember(member.getObjectId(), 0);
 		}
 		
@@ -274,9 +298,9 @@ public class ClanTable {
 			}
 			
 			if (fortId != 0) {
-				Fort fort = FortManager.getInstance().getFortById(fortId);
+				final var fort = FortManager.getInstance().getFortById(fortId);
 				if (fort != null) {
-					L2Clan owner = fort.getOwnerClan();
+					final var owner = fort.getOwnerClan();
 					if (clan == owner) {
 						fort.removeOwner(true);
 					}
@@ -284,7 +308,7 @@ public class ClanTable {
 			}
 			
 			if (hallId != 0) {
-				SiegableHall hall = ClanHallSiegeManager.getInstance().getSiegableHall(hallId);
+				final var hall = ClanHallSiegeManager.getInstance().getSiegableHall(hallId);
 				if ((hall != null) && (hall.getOwnerId() == clanId)) {
 					hall.free();
 				}
@@ -297,19 +321,176 @@ public class ClanTable {
 		EventDispatcher.getInstance().notifyEventAsync(new PlayerClanDestroy(leaderMember, clan));
 	}
 	
-	public void scheduleRemoveClan(final int clanId) {
-		ThreadPoolManager.getInstance().scheduleGeneral(() -> {
-			if (getClan(clanId) == null) {
-				return;
+	public boolean dismissPledge(L2PcInstance player) {
+		if (!player.isClanLeader()) {
+			player.sendPacket(YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+			return false;
+		}
+		
+		final var clan = player.getClan();
+		if (clan.getAllyId() != 0) {
+			player.sendPacket(CANNOT_DISPERSE_THE_CLANS_IN_ALLY);
+			return false;
+		}
+		
+		if (clan.isAtWar()) {
+			player.sendPacket(CANNOT_DISSOLVE_WHILE_IN_WAR);
+			return false;
+		}
+		
+		if ((clan.getCastleId() != 0) || (clan.getHideoutId() != 0) || (clan.getFortId() != 0)) {
+			player.sendPacket(CANNOT_DISSOLVE_WHILE_OWNING_CLAN_HALL_OR_CASTLE);
+			return false;
+		}
+		
+		for (var castle : CastleManager.getInstance().getCastles()) {
+			if (SiegeManager.getInstance().checkIsRegistered(clan, castle.getResidenceId())) {
+				player.sendPacket(CANNOT_DISSOLVE_WHILE_IN_SIEGE);
+				return false;
 			}
-			if (getClan(clanId).getDissolvingExpiryTime() != 0) {
-				destroyClan(clanId);
+		}
+		
+		for (var fort : FortManager.getInstance().getForts()) {
+			if (FortSiegeManager.getInstance().checkIsRegistered(clan, fort.getResidenceId())) {
+				player.sendPacket(CANNOT_DISSOLVE_WHILE_IN_SIEGE);
+				return false;
 			}
-		}, Math.max(getClan(clanId).getDissolvingExpiryTime() - System.currentTimeMillis(), 300000));
+		}
+		
+		if (player.isInsideZone(SIEGE)) {
+			player.sendPacket(CANNOT_DISSOLVE_WHILE_IN_SIEGE);
+			return false;
+		}
+		
+		if (clan.getDissolvingExpiryTime() > System.currentTimeMillis()) {
+			player.sendPacket(DISSOLUTION_IN_PROGRESS);
+			return false;
+		}
+		
+		clan.setDissolvingExpiryTime(System.currentTimeMillis() + DAYS.toMillis(character().getDaysToPassToDissolveAClan()));
+		clan.updateClanInDB();
+		
+		// The clan leader should take the XP penalty of a full death.
+		player.calculateDeathExpPenalty(null, false);
+		ClanTable.getInstance().scheduleRemoveClan(clan.getId());
+		
+		// Notify
+		EventDispatcher.getInstance().notifyEvent(new PlayerClanDismiss(player), player.getLastFolkNPC());
+		
+		return true;
+	}
+	
+	/**
+	 * Restores a clan scheduled for deletion.
+	 * @param player the clan leader
+	 */
+	public boolean revivePledge(L2PcInstance player) {
+		if (!player.isClanLeader()) {
+			player.sendPacket(YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+			return false;
+		}
+		
+		final var clan = player.getClan();
+		clan.setDissolvingExpiryTime(0);
+		clan.updateClanInDB();
+		
+		EventDispatcher.getInstance().notifyEvent(new PlayerRevivePledge(player), player.getLastFolkNPC());
+		
+		return true;
+	}
+	
+	public boolean createSubPledge(L2PcInstance player, String subPledgeName, String leaderName, int pledgeType) {
+		// TODO(Zoey76): This check might be incomplete.
+		// if (!player.isClanLeader() && (!player.hasClanPrivilege(MANAGE_GROWTH) || player.getClanId() == 0))
+		if (!player.isClanLeader()) {
+			player.sendPacket(YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+			return false;
+		}
+		
+		final var clan = player.getClan();
+		final var minimumClanLevel = getMinimumClanLevel(pledgeType);
+		
+		if (clan.getLevel() < minimumClanLevel) {
+			if (pledgeType == SUBUNIT_ACADEMY) {
+				player.sendPacket(YOU_DO_NOT_MEET_CRITERIA_IN_ORDER_TO_CREATE_A_CLAN_ACADEMY);
+			} else {
+				player.sendPacket(YOU_DO_NOT_MEET_CRITERIA_IN_ORDER_TO_CREATE_A_MILITARY_UNIT);
+			}
+			return false;
+		}
+		
+		if (!clan().getClanNameTemplate().matcher(subPledgeName).matches()) {
+			player.sendPacket(CLAN_NAME_INCORRECT);
+			return false;
+		}
+		
+		if (subPledgeName.length() > clan().getClanNameMaximumLength()) {
+			player.sendPacket(CLAN_NAME_TOO_LONG);
+			return false;
+		}
+		
+		for (var tempClan : ClanTable.getInstance().getClans()) {
+			if (tempClan.getSubPledge(subPledgeName) != null) {
+				if (pledgeType == SUBUNIT_ACADEMY) {
+					final var sm = SystemMessage.getSystemMessage(S1_ALREADY_EXISTS);
+					sm.addString(subPledgeName);
+					player.sendPacket(sm);
+				} else {
+					player.sendPacket(ANOTHER_MILITARY_UNIT_IS_ALREADY_USING_THAT_NAME);
+				}
+				return false;
+			}
+		}
+		
+		if (pledgeType != SUBUNIT_ACADEMY) {
+			if ((clan.getClanMember(leaderName) == null) || (clan.getClanMember(leaderName).getPledgeType() != 0)) {
+				if (pledgeType >= SUBUNIT_KNIGHT1) {
+					player.sendPacket(CAPTAIN_OF_ORDER_OF_KNIGHTS_CANNOT_BE_APPOINTED);
+				} else if (pledgeType >= SUBUNIT_ROYAL1) {
+					player.sendPacket(CAPTAIN_OF_ROYAL_GUARD_CANNOT_BE_APPOINTED);
+				}
+				return false;
+			}
+		}
+		
+		final int leaderId = pledgeType != SUBUNIT_ACADEMY ? clan.getClanMember(leaderName).getObjectId() : 0;
+		if (clan.createSubPledge(player, pledgeType, leaderId, subPledgeName) == null) {
+			return false;
+		}
+		
+		SystemMessage sm;
+		if (pledgeType == SUBUNIT_ACADEMY) {
+			sm = SystemMessage.getSystemMessage(THE_S1S_CLAN_ACADEMY_HAS_BEEN_CREATED);
+			sm.addString(player.getClan().getName());
+		} else if (pledgeType >= SUBUNIT_KNIGHT1) {
+			sm = SystemMessage.getSystemMessage(THE_KNIGHTS_OF_S1_HAVE_BEEN_CREATED);
+			sm.addString(player.getClan().getName());
+		} else if (pledgeType >= SUBUNIT_ROYAL1) {
+			sm = SystemMessage.getSystemMessage(THE_ROYAL_GUARD_OF_S1_HAVE_BEEN_CREATED);
+			sm.addString(player.getClan().getName());
+		} else {
+			sm = SystemMessage.getSystemMessage(CLAN_CREATED);
+		}
+		player.sendPacket(sm);
+		
+		if (pledgeType != SUBUNIT_ACADEMY) {
+			final var leaderSubPledge = clan.getClanMember(leaderName);
+			final var leaderPlayer = leaderSubPledge.getPlayerInstance();
+			if (leaderPlayer != null) {
+				leaderPlayer.setPledgeClass(L2ClanMember.calculatePledgeClass(leaderPlayer));
+				leaderPlayer.sendPacket(new UserInfo(leaderPlayer));
+				leaderPlayer.sendPacket(new ExBrExtraUserInfo(leaderPlayer));
+			}
+		}
+		
+		// Notify
+		EventDispatcher.getInstance().notifyEvent(new PlayerCreateSubPledge(player, pledgeType), player.getLastFolkNPC());
+		
+		return true;
 	}
 	
 	public boolean isAllyExists(String allyName) {
-		for (L2Clan clan : getClans()) {
+		for (var clan : getClans()) {
 			if ((clan.getAllyName() != null) && clan.getAllyName().equalsIgnoreCase(allyName)) {
 				return true;
 			}
@@ -318,8 +499,8 @@ public class ClanTable {
 	}
 	
 	public void storeclanswars(int clanId1, int clanId2) {
-		final L2Clan clan1 = getClan(clanId1);
-		final L2Clan clan2 = getClan(clanId2);
+		final var clan1 = getClan(clanId1);
+		final var clan2 = getClan(clanId2);
 		
 		EventDispatcher.getInstance().notifyEventAsync(new ClanWarStart(clan1, clan2));
 		
@@ -340,7 +521,7 @@ public class ClanTable {
 		
 		// SystemMessage msg = SystemMessage.getSystemMessage(SystemMessageId.WAR_WITH_THE_S1_CLAN_HAS_BEGUN);
 		//
-		SystemMessage msg = SystemMessage.getSystemMessage(SystemMessageId.CLAN_WAR_DECLARED_AGAINST_S1_IF_KILLED_LOSE_LOW_EXP);
+		var msg = SystemMessage.getSystemMessage(SystemMessageId.CLAN_WAR_DECLARED_AGAINST_S1_IF_KILLED_LOSE_LOW_EXP);
 		msg.addString(clan2.getName());
 		clan1.broadcastToOnlineMembers(msg);
 		// msg = SystemMessage.getSystemMessage(SystemMessageId.WAR_WITH_THE_S1_CLAN_HAS_BEGUN);
@@ -353,8 +534,8 @@ public class ClanTable {
 	}
 	
 	public void deleteclanswars(int clanId1, int clanId2) {
-		L2Clan clan1 = getClan(clanId1);
-		L2Clan clan2 = getClan(clanId2);
+		final var clan1 = getClan(clanId1);
+		final var clan2 = getClan(clanId2);
 		
 		EventDispatcher.getInstance().notifyEventAsync(new ClanWarFinish(clan1, clan2));
 		
@@ -373,7 +554,7 @@ public class ClanTable {
 		}
 		
 		// SystemMessage msg = SystemMessage.getSystemMessage(SystemMessageId.WAR_WITH_THE_S1_CLAN_HAS_ENDED);
-		SystemMessage msg = SystemMessage.getSystemMessage(SystemMessageId.WAR_AGAINST_S1_HAS_STOPPED);
+		var msg = SystemMessage.getSystemMessage(SystemMessageId.WAR_AGAINST_S1_HAS_STOPPED);
 		msg.addString(clan2.getName());
 		clan1.broadcastToOnlineMembers(msg);
 		msg = SystemMessage.getSystemMessage(SystemMessageId.CLAN_S1_HAS_DECIDED_TO_STOP);
@@ -383,7 +564,7 @@ public class ClanTable {
 	
 	public void checkSurrender(L2Clan clan1, L2Clan clan2) {
 		int count = 0;
-		for (L2ClanMember player : clan1.getMembers()) {
+		for (var player : clan1.getMembers()) {
 			if ((player != null) && (player.getPlayerInstance().getWantsPeace() == 1)) {
 				count++;
 			}
@@ -396,13 +577,12 @@ public class ClanTable {
 	}
 	
 	private void restorewars() {
-		L2Clan clan1, clan2;
 		try (var con = ConnectionFactory.getInstance().getConnection();
 			var statement = con.createStatement();
 			var rs = statement.executeQuery("SELECT clan1, clan2 FROM clan_wars")) {
 			while (rs.next()) {
-				clan1 = getClan(rs.getInt("clan1"));
-				clan2 = getClan(rs.getInt("clan2"));
+				final var clan1 = getClan(rs.getInt("clan1"));
+				final var clan2 = getClan(rs.getInt("clan2"));
 				if ((clan1 != null) && (clan2 != null)) {
 					clan1.setEnemyClan(rs.getInt("clan2"));
 					clan2.setAttackerClan(rs.getInt("clan1"));
@@ -419,7 +599,7 @@ public class ClanTable {
 	 * Check for nonexistent alliances
 	 */
 	private void allianceCheck() {
-		for (L2Clan clan : _clans.values()) {
+		for (var clan : _clans.values()) {
 			int allyId = clan.getAllyId();
 			if ((allyId != 0) && (clan.getId() != allyId)) {
 				if (!_clans.containsKey(allyId)) {
@@ -434,9 +614,9 @@ public class ClanTable {
 	}
 	
 	public List<L2Clan> getClanAllies(int allianceId) {
-		final List<L2Clan> clanAllies = new ArrayList<>();
+		final var clanAllies = new LinkedList<L2Clan>();
 		if (allianceId != 0) {
-			for (L2Clan clan : _clans.values()) {
+			for (var clan : _clans.values()) {
 				if ((clan != null) && (clan.getAllyId() == allianceId)) {
 					clanAllies.add(clan);
 				}
@@ -446,13 +626,33 @@ public class ClanTable {
 	}
 	
 	public void storeClanScore() {
-		for (L2Clan clan : _clans.values()) {
+		for (var clan : _clans.values()) {
 			clan.updateClanScoreInDB();
 		}
 	}
 	
 	public static ClanTable getInstance() {
 		return SingletonHolder._instance;
+	}
+	
+	private void scheduleRemoveClan(int clanId) {
+		ThreadPoolManager.getInstance().scheduleGeneral(() -> {
+			if (getClan(clanId) == null) {
+				return;
+			}
+			if (getClan(clanId).getDissolvingExpiryTime() != 0) {
+				destroyClan(clanId);
+			}
+		}, Math.max(getClan(clanId).getDissolvingExpiryTime() - System.currentTimeMillis(), 300000));
+	}
+	
+	private static int getMinimumClanLevel(int pledgeType) {
+		return switch (pledgeType) {
+			case SUBUNIT_ACADEMY -> 5;
+			case SUBUNIT_ROYAL1 -> 6;
+			case SUBUNIT_KNIGHT1 -> 7;
+			default -> throw new RuntimeException("Unk " + pledgeType + " minimum level!");
+		};
 	}
 	
 	private static class SingletonHolder {

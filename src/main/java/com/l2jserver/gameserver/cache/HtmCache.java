@@ -64,7 +64,7 @@ public class HtmCache {
 		if (!general().lazyCache()) {
 			LOG.info("Html cache start...");
 			parseDir(f);
-			LOG.info(String.format("%.3f", getMemoryUsage()) + " megabytes on " + getLoadedFiles() + " files loaded.");
+			LOG.info("{} megabytes on {} files loaded.", String.format("%.3f", getMemoryUsage()), getLoadedFiles());
 		} else {
 			HTML_CACHE.clear();
 			_loadedFiles = 0;
@@ -87,9 +87,9 @@ public class HtmCache {
 	}
 	
 	private void parseDir(File dir) {
-		final File[] files = dir.listFiles();
+		final var files = dir.listFiles();
 		if (files != null) {
-			for (File file : files) {
+			for (var file : files) {
 				if (!file.isDirectory()) {
 					loadFile(file);
 				} else {
@@ -121,8 +121,8 @@ public class HtmCache {
 			} else {
 				_bytesBuffLen = (_bytesBuffLen - oldContent.length()) + bytes;
 			}
-		} catch (Exception e) {
-			LOG.warn("Problem with htm file {}!", file, e);
+		} catch (Exception ex) {
+			LOG.warn("Problem with htm file {}!", file, ex);
 		}
 		return content;
 	}
@@ -131,17 +131,22 @@ public class HtmCache {
 		final var newPath = Objects.requireNonNullElse(prefix, "") + path;
 		var content = HTML_CACHE.get(newPath);
 		if (general().lazyCache() && (content == null)) {
-			content = loadFile(new File(server().getDatapackRoot(), newPath));
-			if (content == null) {
-				content = loadFile(new File(server().getScriptRoot(), newPath));
-			}
+			content = tryLoadContent(newPath);
 			
 			// If multilanguage content is not present, try default location.
 			if ((prefix != null) && (content == null)) {
-				content = loadFile(new File(server().getDatapackRoot(), path));
-				if (content == null) {
-					content = loadFile(new File(server().getScriptRoot(), path));
-				}
+				content = tryLoadContent(path);
+			}
+		}
+		return content;
+	}
+	
+	private String tryLoadContent(String path) {
+		var content = loadFile(server().getDatapackRoot().toPath().resolve(path).toFile());
+		if (content == null) {
+			content = loadFile(server().getDatapackRoot().toPath().resolve("data/html").resolve(path).toFile());
+			if (content == null) {
+				content = loadFile(server().getScriptRoot().toPath().resolve(path).toFile());
 			}
 		}
 		return content;
@@ -156,7 +161,7 @@ public class HtmCache {
 	 * @return {@code true} if the path targets a HTM or HTML file, {@code false} otherwise.
 	 */
 	public boolean isLoadable(String path) {
-		return HTML_FILTER.accept(new File(server().getDatapackRoot(), path));
+		return HTML_FILTER.accept(server().getDatapackRoot().toPath().resolve(path).toFile());
 	}
 	
 	public static HtmCache getInstance() {
