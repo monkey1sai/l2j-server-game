@@ -52,7 +52,7 @@ public class TaskScript extends Task {
 		}
 		
 		try {
-			ScriptEngineManager.getInstance().compileScript(file);
+			ScriptEngineManager.getInstance().executeScript(file.toString());
 		} catch (Exception ex) {
 			LOG.warn("Failed loading {}!", task.getParams()[2]);
 		}

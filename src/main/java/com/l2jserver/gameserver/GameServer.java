@@ -145,6 +145,7 @@ import com.l2jserver.gameserver.network.L2GamePacketHandler;
 import com.l2jserver.gameserver.pathfinding.PathFinding;
 import com.l2jserver.gameserver.script.faenor.FaenorScriptEngine;
 import com.l2jserver.gameserver.scripting.ScriptEngineManager;
+import com.l2jserver.gameserver.scripting.ScriptLoader;
 import com.l2jserver.gameserver.status.Status;
 import com.l2jserver.gameserver.taskmanager.KnownListUpdateTaskManager;
 import com.l2jserver.gameserver.taskmanager.TaskManager;
@@ -194,7 +195,10 @@ public final class GameServer {
 		
 		ThreadPoolManager.getInstance();
 		EventDispatcher.getInstance();
+		
+		final var scriptEngineStart = startTimedSection("ScriptEngine");
 		ScriptEngineManager.getInstance();
+		endTimedSection("ScriptEngine", scriptEngineStart);
 		
 		final var worldStart = startTimedSection("World");
 		GameTimeController.init();
@@ -211,7 +215,8 @@ public final class GameServer {
 		endTimedSection("Data", dataStart);
 		
 		final var effectsStart = startTimedSection("Effects");
-		EffectHandler.getInstance().executeScript();
+		EffectHandler.getInstance();
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.EffectScriptLoader.class);
 		endTimedSection("Effects", effectsStart);
 		
 		final var esgStart = startTimedSection("Enchant Skill Groups");
@@ -328,28 +333,31 @@ public final class GameServer {
 		endTimedSection("Cache", cacheStart);
 		
 		final var handlersStart = startTimedSection("Handlers");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/handlers/MasterHandler.java");
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.HandlerScriptLoader.class);
 		endTimedSection("Handlers", handlersStart);
 		
 		final var aiStart = startTimedSection("AI");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/ai/AILoader.java");
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.AIScriptLoader.class);
 		endTimedSection("AI", aiStart);
 		
 		final var instancesStart = startTimedSection("Instances");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/instances/InstanceLoader.java");
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.InstanceScriptLoader.class);
 		endTimedSection("Instances", instancesStart);
 		
 		final var graciaStart = startTimedSection("Gracia");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/gracia/GraciaLoader.java");
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.GraciaScriptLoader.class);
 		endTimedSection("Gracia", graciaStart);
 		
 		final var hellboundStart = startTimedSection("Hellbound");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/hellbound/HellboundLoader.java");
+		ScriptEngineManager.getInstance().loadType(ScriptLoader.HellboundScriptLoader.class);
 		endTimedSection("Hellbound", hellboundStart);
 		
 		final var questsStart = startTimedSection("Quests");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/quests/QuestLoader.java");
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/quests/TerritoryWarScripts/TerritoryWarSuperClass.java");
+		if (general().noQuests()) {
+			LOG.info("Quests disabled.");
+		} else {
+			ScriptEngineManager.getInstance().loadType(ScriptLoader.QuestScriptLoader.class);
+		}
 		endTimedSection("Quests", questsStart);
 		
 		final var scriptsStart = startTimedSection("Scripts");

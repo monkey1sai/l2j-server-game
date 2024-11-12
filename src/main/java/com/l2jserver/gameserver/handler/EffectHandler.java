@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.l2jserver.gameserver.model.effects.AbstractEffect;
-import com.l2jserver.gameserver.scripting.ScriptEngineManager;
 
 /**
  * @author BiggBoss
@@ -53,10 +52,6 @@ public final class EffectHandler implements IHandler<Class<? extends AbstractEff
 	@Override
 	public int size() {
 		return _handlers.size();
-	}
-	
-	public void executeScript() throws Exception {
-		ScriptEngineManager.getInstance().executeScript("com/l2jserver/datapack/handlers/EffectMasterHandler.java");
 	}
 	
 	public static EffectHandler getInstance() {

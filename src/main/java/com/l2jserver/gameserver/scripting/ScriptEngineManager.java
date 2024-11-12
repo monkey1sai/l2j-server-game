@@ -1,214 +1,169 @@
 /*
  * Copyright © 2004-2024 L2J Server
- * 
+ *
  * This file is part of L2J Server.
- * 
+ *
  * L2J Server is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * L2J Server is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package com.l2jserver.gameserver.scripting;
 
-import static com.l2jserver.gameserver.config.Configuration.general;
 import static com.l2jserver.gameserver.config.Configuration.server;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.io.Reader;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.script.ScriptException;
-
-import org.mdkt.compiler.InMemoryJavaCompiler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.l2jserver.gameserver.config.ServerConfiguration;
+
 /**
  * Script engine manager.
- * @author KenM
- * @author Zoey76
+ * @author KenM, Zoey76, Kita
  */
 public final class ScriptEngineManager {
 	private static final Logger LOG = LoggerFactory.getLogger(ScriptEngineManager.class);
 	
-	private static final String CLASS_PATH = server().getScriptRoot().getAbsolutePath() + System.getProperty("path.separator") + System.getProperty("java.class.path");
+	private final ServerConfiguration serverConfig;
 	
-	private static final String MAIN = "main";
+	private final Map<String, Set<Class<?>>> scriptLoaders;
 	
-	private static final Object[] MAIN_METHOD_ARGS = new Object[] {
-		new String[0]
-	};
+	private ClassLoader classLoader;
 	
-	private static final Class<?>[] ARG_MAIN = new Class[] {
-		String[].class
-	};
-	
-	private InMemoryJavaCompiler compiler() {
-		return InMemoryJavaCompiler.newInstance() //
-			.useOptions("-classpath", CLASS_PATH, "-g") //
-			.ignoreWarnings();
+	private ScriptEngineManager(ServerConfiguration serverConfig) {
+		this.serverConfig = serverConfig;
+		this.scriptLoaders = new HashMap<>();
+		
+		try {
+			final var scriptRootUrl = Path.of(serverConfig.getScriptRoot().getPath()).toUri().toURL();
+			classLoader = new URLClassLoader("Scripts", new URL[] { scriptRootUrl }, this.getClass().getClassLoader());
+			
+			discoverLoaders();
+		} catch (Exception e) {
+			LOG.error("Failed to initialise classloader", e);
+		}
 	}
 	
-	public void executeScriptList(File list) throws Exception {
-		if (general().noQuests()) {
-			return;
-		}
+	private void discoverLoaders() {
+		final var scriptRootPath = Path.of(serverConfig.getScriptRoot().getPath());
+		LOG.debug("Discovering script loaders from {}", scriptRootPath);
 		
-		if (!list.isFile()) {
+		try (var scripts = Files.walk(scriptRootPath)) {
+			// Find all the class files in the script directory
+			scripts.filter(Files::isRegularFile)
+				.filter(path -> path.toString().endsWith(".class"))
+				.map(scriptRootPath::relativize)
+				.map(Path::toString)
+				// Turn file paths to fully qualified class names
+				.map(pathStr -> pathStr.replace(File.separatorChar, '.'))
+				.map(pathStr -> pathStr.replace(".class", ""))
+				.peek(fqcn -> LOG.trace("Found class: {}", fqcn))
+				// Load classes
+				.map(fqcn -> {
+					try {
+						return classLoader.loadClass(fqcn);
+					} catch (ClassNotFoundException e) {
+						LOG.error("Failed to load class: {}", fqcn, e);
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
+				// Find implementations of script loader
+				.filter(ScriptLoader.class::isAssignableFrom)
+				.forEach(clazz -> {
+					// Sort them by marker interface in the script loaders map
+					Arrays.stream(clazz.getInterfaces())
+						.filter(ScriptLoader.class::isAssignableFrom)
+						.findFirst()
+						.ifPresent(infClass -> {
+							LOG.debug("Registered script loader {} with type {}", clazz.getSimpleName(), infClass.getSimpleName());
+							scriptLoaders.putIfAbsent(infClass.getSimpleName(), new HashSet<>());
+							scriptLoaders.get(infClass.getSimpleName()).add(clazz);
+						});
+				});
+			
+			LOG.info("Loaded {} script loaders", scriptLoaders.values().stream().mapToLong(Set::size).sum());
+		} catch (IOException e) {
+			LOG.error("Failed to discover scripts from {}", scriptRootPath, e);
+		}
+	}
+	
+	public void loadType(Class<? extends ScriptLoader> type) {
+		scriptLoaders.get(type.getSimpleName())
+			.forEach(ScriptEngineManager::runLoader);
+	}
+	
+	/**
+	 * Executes a script class contained in the script root directory, by loading it through the ScriptEngine classloader and executing its {@code main} method.
+	 * @param fqcn fully qualified class name of the script (e.g. {@code com.l2jserver.datapack.MyScript})
+	 */
+	public void executeScript(String fqcn) {
+		try {
+			final var clazz = classLoader.loadClass(fqcn);
+			runLoader(clazz);
+		} catch (ClassNotFoundException e) {
+			LOG.error("Could not load {}", fqcn, e);
+		}
+	}
+	
+	/**
+	 * Reads a script list file and attempts to load and execute all scripts listed in that file
+	 * @param scriptListFile the script list file to load
+	 * @see ScriptEngineManager#executeScript(String)
+	 */
+	public void executeScriptList(File scriptListFile) {
+		if (!scriptListFile.isFile()) {
 			throw new IllegalArgumentException("Argument must be an file containing a list of scripts to be loaded");
 		}
 		
-		final var compiler = compiler();
-		try (var fis = new FileInputStream(list);
-			var isr = new InputStreamReader(fis);
-			var lnr = new LineNumberReader(isr)) {
-			String line;
-			while ((line = lnr.readLine()) != null) {
-				final var parts = line.trim().split("#");
-				if ((parts.length <= 0) || parts[0].trim().isEmpty() || (parts[0].charAt(0) == '#')) {
-					continue;
-				}
-				
-				line = parts[0].trim();
-				if (line.endsWith("/**")) {
-					line = line.substring(0, line.length() - 3);
-				} else if (line.endsWith("/*")) {
-					line = line.substring(0, line.length() - 2);
-				}
-				
-				final var file = new File(server().getScriptRoot(), line);
-				if (file.isDirectory() && parts[0].endsWith("/**")) {
-					executeAllScriptsInDirectory(compiler, file, true);
-				} else if (file.isDirectory() && parts[0].endsWith("/*")) {
-					executeAllScriptsInDirectory(compiler, file, false);
-				} else if (file.isFile()) {
-					addSource(compiler, file);
-				} else {
-					LOG.warn("Failed loading: ({}) @ {}:{} - Reason: doesnt exists or is not a file.", file.getCanonicalPath(), list.getName(), lnr.getLineNumber());
-				}
-			}
+		try (var lines = Files.lines(scriptListFile.toPath())) {
+			lines.map(String::trim)
+				.filter(line -> !line.isEmpty())
+				.filter(line -> !line.startsWith("#"))
+				.forEach(this::executeScript);
+		} catch (Exception e) {
+			LOG.error("Error loading {}", scriptListFile.getName(), e);
 		}
-		
-		compiler.compileAll().forEach((k, v) -> runMain(v));
 	}
 	
-	private void executeAllScriptsInDirectory(InMemoryJavaCompiler compiler, File dir, boolean recurseDown) {
-		if (!dir.isDirectory()) {
-			throw new IllegalArgumentException("The argument directory either doesnt exists or is not an directory.");
-		}
-		
-		final var files = dir.listFiles();
-		if (files == null) {
+	private static void runLoader(Class<?> clazz) {
+		if (clazz == null) {
+			LOG.error("Attempting to load null class");
 			return;
 		}
 		
-		for (var file : files) {
-			if (file.isDirectory() && recurseDown) {
-				if (general().debug()) {
-					LOG.info("Entering folder: {}", file.getName());
-				}
-				executeAllScriptsInDirectory(compiler, file, recurseDown);
-			} else if (file.isFile()) {
-				addSource(compiler, file);
-			}
-		}
-	}
-	
-	public Class<?> compileScript(File file) {
-		try (var fis = new FileInputStream(file);
-			var isr = new InputStreamReader(fis);
-			var reader = new BufferedReader(isr)) {
-			return compiler().compile(getClassForFile(file), readerToString(reader));
-		} catch (Exception ex) {
-			LOG.warn("Error executing script!", ex);
-		}
-		return null;
-	}
-	
-	public void executeScript(File file) {
-		final Class<?> clazz = compileScript(file);
-		runMain(clazz);
-	}
-	
-	public void executeScript(String file) {
-		executeScript(new File(server().getScriptRoot(), file));
-	}
-	
-	public void addSource(InMemoryJavaCompiler compiler, File file) {
-		if (general().debug()) {
-			LOG.info("Loading Script: {}", file.getAbsolutePath());
-		}
-		
-		try (var fis = new FileInputStream(file);
-			var isr = new InputStreamReader(fis);
-			var reader = new BufferedReader(isr)) {
-			compiler.addSource(getClassForFile(file), readerToString(reader));
-		} catch (Exception ex) {
-			LOG.warn("Error executing script!", ex);
-		}
-	}
-	
-	private static String getClassForFile(File script) {
-		final String path = script.getAbsolutePath();
-		final String scpPath = server().getScriptRoot().getAbsolutePath();
-		if (path.startsWith(scpPath)) {
-			final int idx = path.lastIndexOf('.');
-			return path.substring(scpPath.length() + 1, idx).replace('/', '.').replace('\\', '.');
-		}
-		return null;
-	}
-	
-	private static void runMain(Class<?> clazz) {
-		final var mainMethod = findMethod(clazz, MAIN, ARG_MAIN);
-		if (mainMethod == null) {
-			LOG.warn("Unable to find main method in class {}!", clazz);
+		if (!ScriptLoader.class.isAssignableFrom(clazz)) {
+			LOG.error("{} is not a valid loader", clazz.getSimpleName());
 			return;
 		}
 		
 		try {
-			mainMethod.invoke(null, MAIN_METHOD_ARGS);
-		} catch (Exception ex) {
-			LOG.error("Error loading script {}!", clazz);
+			final var loader = (ScriptLoader) clazz.getDeclaredConstructor().newInstance();
+			loader.load();
+		} catch (Exception e) {
+			LOG.error("Error loading script {}", clazz.getSimpleName(), e);
 		}
-	}
-	
-	private static String readerToString(Reader reader) throws ScriptException {
-		try (var in = new BufferedReader(reader)) {
-			final var result = new StringBuilder();
-			String line;
-			while ((line = in.readLine()) != null) {
-				result.append(line).append(System.lineSeparator());
-			}
-			return result.toString();
-		} catch (IOException ex) {
-			throw new ScriptException(ex);
-		}
-	}
-	
-	private static Method findMethod(Class<?> clazz, String methodName, Class<?>[] args) {
-		try {
-			final var mainMethod = clazz.getMethod(methodName, args);
-			final int modifiers = mainMethod.getModifiers();
-			if (Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers)) {
-				return mainMethod;
-			}
-		} catch (NoSuchMethodException ignored) {
-		}
-		return null;
 	}
 	
 	public static ScriptEngineManager getInstance() {
@@ -216,6 +171,6 @@ public final class ScriptEngineManager {
 	}
 	
 	private static class SingletonHolder {
-		protected static final ScriptEngineManager INSTANCE = new ScriptEngineManager();
+		protected static final ScriptEngineManager INSTANCE = new ScriptEngineManager(server());
 	}
 }
