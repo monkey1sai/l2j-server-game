@@ -1642,6 +1642,62 @@ public abstract class AbstractScript implements INamable {
 	}
 	
 	/**
+	 * Add a temporary spawn of the specified NPC.
+	 * @param npcId the ID of the NPC to spawn
+	 * @param x the X coordinate of the spawn location
+	 * @param y the Y coordinate of the spawn location
+	 * @param z the Z coordinate (height) of the spawn location
+	 * @param heading the heading of the NPC
+	 * @param randomOffset if {@code true}, adds +/- 50~100 to X/Y coordinates of the spawn location
+	 * @param despawnDelay time in milliseconds till the NPC is despawned (0 - only despawned on server shutdown)
+	 * @param isSummonSpawn if {@code true}, displays a summon animation on NPC spawn
+	 * @param param1 spawn value for the npc
+	 * @param param2 spawn value for the npc
+	 * @param param3 spawn value for the npc
+	 * @return the {@link L2Npc} object of the newly spawned NPC or {@code null} if the NPC doesn't exist
+	 */
+	public static L2Npc addSpawnEx(int npcId, int x, int y, int z, int heading, boolean randomOffset, long despawnDelay, boolean isSummonSpawn, long param1, long param2, long param3) {
+		try {
+			if ((x == 0) && (y == 0)) {
+				LOG.error("addSpawn(): invalid spawn coordinates for NPC #{}!", npcId);
+				return null;
+			}
+			
+			if (randomOffset) {
+				int offset = Rnd.get(50, 100);
+				if (Rnd.nextBoolean()) {
+					offset *= -1;
+				}
+				x += offset;
+				
+				offset = Rnd.get(50, 100);
+				if (Rnd.nextBoolean()) {
+					offset *= -1;
+				}
+				y += offset;
+			}
+			
+			final L2Spawn spawn = new L2Spawn(npcId);
+			spawn.setInstanceId(0);
+			spawn.setHeading(heading);
+			spawn.setX(x);
+			spawn.setY(y);
+			spawn.setZ(z);
+			spawn.stopRespawn();
+			
+			final L2Npc npc = spawn.doSpawnEx(isSummonSpawn, param1, param2, param3);
+			if (despawnDelay > 0) {
+				npc.scheduleDespawn(despawnDelay);
+			}
+			
+			return npc;
+		} catch (Exception ex) {
+			LOG.warn("Could not spawn NPC #{}", npcId, ex);
+		}
+		return null;
+	}
+	
+	/**
 	 * @param trapId
 	 * @param x
 	 * @param y

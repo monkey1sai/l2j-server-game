@@ -8576,6 +8576,12 @@ public final class NpcStringId {
 	public static final NpcStringId N1_MINUTE;
 	
 	/**
+	 * ID: 1000441<br>
+	 * Message: $s1 Minute(s)
+	 */
+	public static final NpcStringId S1_MINUTES;
+	
+	/**
 	 * ID: 1000443<br>
 	 * Message: The defenders of $s1 castle will be teleported to the inner castle.
 	 */
@@ -23040,6 +23046,7 @@ public final class NpcStringId {
 		ARE_YOU_HURT_HANG_IN_THERE_WEVE_ALMOST_GOT_THEM = new NpcStringId(1000439);
 		WHY_SHOULD_I_TELL_YOU_MY_NAME_YOU_CREEP = new NpcStringId(1000440);
 		N1_MINUTE = new NpcStringId(1000441);
+		S1_MINUTES = new NpcStringId(1000442);
 		THE_DEFENDERS_OF_S1_CASTLE_WILL_BE_TELEPORTED_TO_THE_INNER_CASTLE = new NpcStringId(1000443);
 		SUNDAY = new NpcStringId(1000444);
 		MONDAY = new NpcStringId(1000445);

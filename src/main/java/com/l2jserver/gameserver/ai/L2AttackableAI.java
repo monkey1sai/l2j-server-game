@@ -144,7 +144,6 @@ public class L2AttackableAI extends L2CharacterAI {
 		if (target == null) {
 			return false;
 		}
-		
 		// Check if the target isn't invulnerable
 		if (target.isInvul()) {
 			// However EffectInvincible requires to check GMs specially
@@ -408,14 +407,6 @@ public class L2AttackableAI extends L2CharacterAI {
 			for (var obj : actor.getKnownList().getKnownObjects().values()) {
 				if (!(obj instanceof L2Character target) || (obj instanceof L2StaticObjectInstance)) {
 					continue;
-				}
-				
-				// Check to see if this is a festival mob spawn.
-				// If it is, then check to see if the aggro trigger is a festival participant...if so, move to attack it.
-				if ((actor instanceof L2FestivalMonsterInstance) && (obj instanceof L2PcInstance targetPlayer)) {
-					if (!(targetPlayer.isFestivalParticipant())) {
-						continue;
-					}
 				}
 				
 				// For each L2Character check if the target is autoattackable, check aggression

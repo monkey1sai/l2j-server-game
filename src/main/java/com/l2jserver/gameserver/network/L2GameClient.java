@@ -675,7 +675,7 @@ public final class L2GameClient extends MMOClient<MMOConnection<L2GameClient>> i
 	 * @return {@code true} if the player is allowed to remain as off-line shop.
 	 */
 	protected boolean offlineMode(L2PcInstance player) {
-		if (player.isInOlympiadMode() || player.isFestivalParticipant() || player.isBlockedFromExit() || player.isJailed() || (player.getVehicle() != null)) {
+		if (player.isInOlympiadMode() || player.isInsideZone(ZoneId.SSQZONE) || player.isBlockedFromExit() || player.isJailed() || (player.getVehicle() != null)) {
 			return false;
 		}
 		

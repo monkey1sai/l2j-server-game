@@ -71,7 +71,6 @@ import com.l2jserver.gameserver.ItemsAutoDestroy;
 import com.l2jserver.gameserver.LoginServerThread;
 import com.l2jserver.gameserver.RecipeController;
 import com.l2jserver.gameserver.SevenSigns;
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.ThreadPoolManager;
 import com.l2jserver.gameserver.agathion.repository.AgathionRepository;
 import com.l2jserver.gameserver.ai.CtrlIntention;
@@ -661,6 +660,9 @@ public final class L2PcInstance extends L2Playable {
 	private ClassId _learningClass = getClassId();
 	private ScheduledFuture<?> _taskWarnUserTakeBreak;
 	private L2Fish _fish;
+	
+	private boolean _allowItemDrop = true;
+	private int _expPenaltyPercent = 0;
 	
 	/**
 	 * Creates a player.
@@ -4489,6 +4491,10 @@ public final class L2PcInstance extends L2Playable {
 			return;
 		}
 		
+		if (isInsideZone(ZoneId.SSQZONE) && !getAllowItemDrop()) {
+			return;
+		}
+		
 		if ((!isInsideZone(ZoneId.PVP) || (pk == null)) && (!isGM() || pvp().canGMDropEquipment())) {
 			boolean isKarmaDrop = false;
 			boolean isKillerNpc = (killer instanceof L2Npc);
@@ -4507,7 +4513,7 @@ public final class L2PcInstance extends L2Playable {
 				dropEquipWeapon = rates().getKarmaRateDropEquipWeapon();
 				dropItem = rates().getKarmaRateDropItem();
 				dropLimit = rates().getKarmaDropLimit();
-			} else if (isKillerNpc && (getLevel() > 4) && !isFestivalParticipant()) {
+			} else if (isKillerNpc && (getLevel() > 4)) {
 				dropPercent = rates().getPlayerRateDrop();
 				dropEquip = rates().getPlayerRateDropEquip();
 				dropEquipWeapon = rates().getPlayerRateDropEquipWeapon();
@@ -4867,7 +4873,11 @@ public final class L2PcInstance extends L2Playable {
 			}
 		}
 		
-		if (isFestivalParticipant() || atWar) {
+		if (isInsideZone(ZoneId.SSQZONE)) {
+			lostExp = Math.round((getExpPenaltyPercent() * percentLost) / 1000);
+		}
+		
+		if (atWar) {
 			lostExp /= 4.0;
 		}
 		
@@ -6972,13 +6982,6 @@ public final class L2PcInstance extends L2Playable {
 	 */
 	public void setLastFolkNPC(L2Npc folkNpc) {
 		_lastFolkNpc = folkNpc;
-	}
-	
-	/**
-	 * @return True if L2PcInstance is a participant in the Festival of Darkness.
-	 */
-	public boolean isFestivalParticipant() {
-		return SevenSignsFestival.getInstance().isParticipant(this);
 	}
 	
 	public void addAutoSoulShot(int itemId) {
@@ -10845,7 +10848,7 @@ public final class L2PcInstance extends L2Playable {
 			return false;
 		}
 		
-		if (target.isFestivalParticipant() || target.isFlyingMounted() || target.isCombatFlagEquipped() || !TvTEvent.onEscapeUse(target.getObjectId())) {
+		if (target.isInsideZone(ZoneId.SSQZONE) || target.isFlyingMounted() || target.isCombatFlagEquipped() || !TvTEvent.onEscapeUse(target.getObjectId())) {
 			sendPacket(SystemMessageId.YOUR_TARGET_IS_IN_AN_AREA_WHICH_BLOCKS_SUMMONING);
 			return false;
 		}
@@ -10890,6 +10893,22 @@ public final class L2PcInstance extends L2Playable {
 			}
 		}
 		return true;
+	}
+	
+	public void setAllowItemDrop(boolean value) {
+		_allowItemDrop = value;
+	}
+	
+	public boolean getAllowItemDrop() {
+		return _allowItemDrop;
+	}
+	
+	public void setExpPenaltyPercent(int value) {
+		_expPenaltyPercent = value;
+	}
+	
+	public int getExpPenaltyPercent() {
+		return _expPenaltyPercent;
 	}
 	
 	public Map<Integer, TeleportBookmark> getTpbookmarks() {

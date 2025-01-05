@@ -62,7 +62,6 @@ public enum InstanceType {
 	L2SepulcherNpcInstance(L2NpcInstance),
 	L2SepulcherMonsterInstance(L2MonsterInstance),
 	// Festival
-	L2FestivalGiudeInstance(L2Npc),
 	L2FestivalMonsterInstance(L2MonsterInstance),
 	// Vehicles
 	L2Vehicle(L2Character),

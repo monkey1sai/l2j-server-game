@@ -515,6 +515,58 @@ public class L2Spawn implements IPositionable, IIdentifiable, INamable {
 	}
 	
 	/**
+	 * Create the L2NpcInstance, add it to the world and launch its OnSpawn action.<br>
+	 * <B><U>Concept</U>:</B><br>
+	 * L2NpcInstance can be spawned either in a random position into a location area (if Lox=0 and Locy=0), either at an exact position.<br>
+	 * The heading of the L2NpcInstance can be a random heading if not defined (value= -1) or an exact heading (ex : merchant...).<br>
+	 * <B><U>Actions for an random spawn into location area</U>:<I> (if Locx=0 and Locy=0)</I></B>
+	 * <ul>
+	 * <li>Get L2NpcInstance Init parameters and its generate an Identifier</li>
+	 * <li>Call the constructor of the L2NpcInstance</li>
+	 * <li>Calculate the random position in the location area (if Locx=0 and Locy=0) or get its exact position from the L2Spawn</li>
+	 * <li>Set the position of the L2NpcInstance</li>
+	 * <li>Set the HP and MP of the L2NpcInstance to the max</li>
+	 * <li>Set the heading of the L2NpcInstance (random heading if not defined : value=-1)</li>
+	 * <li>Link the L2NpcInstance to this L2Spawn</li>
+	 * <li>Init other values of the L2NpcInstance (ex : from its L2CharTemplate for INT, STR, DEX...) and add it in the world</li>
+	 * <li>Launch the action OnSpawn fo the L2NpcInstance</li>
+	 * <li>Increase the current number of L2NpcInstance managed by this L2Spawn</li>
+	 * </ul>
+	 * @param isSummonSpawn
+	 * @param param1
+	 * @param param2
+	 * @param param3
+	 * @return
+	 */
+	public L2Npc doSpawnEx(boolean isSummonSpawn, long param1, long param2, long param3) {
+		try {
+			// Check if the L2Spawn is not a L2Pet or L2Minion or L2Decoy spawn
+			if (_template.isType("L2Pet") || _template.isType("L2Decoy") || _template.isType("L2Trap")) {
+				_currentCount++;
+				
+				return null;
+			}
+			
+			// Call the constructor of the L2Npc
+			L2Npc npc = _constructor.newInstance(_template);
+			npc.setInstanceId(getInstanceId()); // Must be done before object is spawned into visible world
+			if (isSummonSpawn) {
+				npc.setShowSummonAnimation(isSummonSpawn);
+			}
+			
+			// Check for certain AI data, overridden in spawnlist
+			if (_name != null) {
+				NpcPersonalAIData.getInstance().initializeNpcParameters(npc, this, _name);
+			}
+			
+			return initializeNpcInstanceEx(npc, param1, param2, param3);
+		} catch (Exception e) {
+			_log.log(Level.WARNING, "NPC " + _template.getId() + " class not found", e);
+		}
+		return null;
+	}
+	
+	/**
 	 * @param mob
 	 * @return
 	 */
@@ -567,6 +619,122 @@ public class L2Spawn implements IPositionable, IIdentifiable, INamable {
 		if (mob.hasVariables()) {
 			mob.getVariables().getSet().clear();
 		}
+		// Set is not random walk default value
+		mob.setIsNoRndWalk(isNoRndWalk());
+		
+		// Set the heading of the L2NpcInstance (random heading if not defined)
+		if (getHeading() == -1) {
+			mob.setHeading(Rnd.nextInt(61794));
+		} else {
+			mob.setHeading(getHeading());
+		}
+		
+		if (mob instanceof L2Attackable) {
+			((L2Attackable) mob).setChampion(false);
+		}
+		
+		if (customs().championEnable()) {
+			// Set champion on next spawn
+			if (mob.isMonster() && !getTemplate().isUndying() && !mob.isRaid() && !mob.isRaidMinion() && //
+				(customs().getChampionFrequency() > 0) && //
+				(mob.getLevel() >= customs().getChampionMinLevel()) && //
+				(mob.getLevel() <= customs().getChampionMaxLevel()) && //
+				(customs().championEnableInInstances() || (getInstanceId() == 0))) {
+				if (Rnd.get(100) < customs().getChampionFrequency()) {
+					((L2Attackable) mob).setChampion(true);
+				}
+			}
+		}
+		
+		// Set the HP and MP of the L2NpcInstance to the max
+		mob.setCurrentHpMp(mob.getMaxHp(), mob.getMaxMp());
+		// Reset summoner
+		mob.setSummoner(null);
+		// Reset summoned list
+		mob.resetSummonedNpcs();
+		// Link the L2NpcInstance to this L2Spawn
+		mob.setSpawn(this);
+		
+		// Spawn NPC
+		mob.spawnMe(newlocx, newlocy, newlocz);
+		
+		notifyNpcSpawned(mob);
+		
+		_spawnedNpcs.add(mob);
+		if (_lastSpawnPoints != null) {
+			_lastSpawnPoints.put(mob.getObjectId(), new Location(newlocx, newlocy, newlocz));
+		}
+		
+		if (general().debug()) {
+			_log.finest("Spawned Mob Id: " + _template.getId() + " , at: X: " + mob.getX() + " Y: " + mob.getY() + " Z: " + mob.getZ());
+		}
+		// Increase the current number of L2NpcInstance managed by this L2Spawn
+		_currentCount++;
+		return mob;
+	}
+	
+	/**
+	 * @param mob
+	 * @param param1
+	 * @param param2
+	 * @param param3
+	 * @return
+	 */
+	private L2Npc initializeNpcInstanceEx(L2Npc mob, long param1, long param2, long param3) {
+		int newlocx = 0;
+		int newlocy = 0;
+		int newlocz = 0;
+		
+		// If Locx and Locy are not defined, the L2NpcInstance must be spawned in an area defined by location or spawn territory
+		// New method
+		if (isTerritoryBased()) {
+			int[] p = _spawnTerritory.getRandomPoint();
+			newlocx = p[0];
+			newlocy = p[1];
+			newlocz = p[2];
+		}
+		// Old method (for backward compatibility)
+		else if ((getX() == 0) && (getY() == 0)) {
+			if (getLocationId() == 0) {
+				return mob;
+			}
+			
+			// Calculate the random position in the location area
+			final Location location = TerritoryTable.getInstance().getRandomPoint(getLocationId());
+			
+			// Set the calculated position of the L2NpcInstance
+			if (location != null) {
+				newlocx = location.getX();
+				newlocy = location.getY();
+				newlocz = location.getZ();
+			}
+		} else {
+			// The L2NpcInstance is spawned at the exact position (Lox, Locy, Locz)
+			newlocx = getX();
+			newlocy = getY();
+			newlocz = getZ();
+		}
+		
+		// don't correct z of flying npc's
+		if (!mob.isFlying()) {
+			newlocz = GeoData.getInstance().getSpawnHeight(newlocx, newlocy, newlocz);
+		}
+		
+		mob.stopAllEffects();
+		
+		mob.setIsDead(false);
+		// Reset decay info
+		mob.setDecayed(false);
+		// Clear script variables
+		if (mob.hasVariables()) {
+			mob.getVariables().getSet().clear();
+		}
+		
+		// set script params
+		mob.setScriptValue("sm.param1", param1);
+		mob.setScriptValue("sm.param2", param2);
+		mob.setScriptValue("sm.param3", param3);
+		
 		// Set is not random walk default value
 		mob.setIsNoRndWalk(isNoRndWalk());
 		

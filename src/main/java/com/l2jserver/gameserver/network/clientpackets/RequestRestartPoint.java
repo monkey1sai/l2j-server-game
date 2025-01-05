@@ -108,9 +108,8 @@ public final class RequestRestartPoint extends L2GameClientPacket {
 		// force jail
 		if (activeChar.isJailed()) {
 			_requestedPointType = 27;
-		} else if (activeChar.isFestivalParticipant()) {
-			_requestedPointType = 5;
 		}
+		
 		switch (_requestedPointType) {
 			case 1: // to clanhall
 			{
@@ -191,22 +190,6 @@ public final class RequestRestartPoint extends L2GameClientPacket {
 					return;
 				}
 				loc = MapRegionManager.getInstance().getTeleToLocation(activeChar, TeleportWhereType.SIEGEFLAG);
-				break;
-			}
-			case 5: // Fixed or Player is a festival participant
-			{
-				if (!activeChar.isGM() && !activeChar.isFestivalParticipant() && !activeChar.getInventory().haveItemForSelfResurrection()) {
-					_log.warning("Player [" + activeChar.getName() + "] called RestartPointPacket - Fixed and he isn't festival participant!");
-					return;
-				}
-				if (activeChar.isGM() || activeChar.destroyItemByItemId("Feather", 10649, 1, activeChar, false) || activeChar.destroyItemByItemId("Feather", 13300, 1, activeChar, false) || activeChar.destroyItemByItemId("Feather", 13128, 1, activeChar, false)) {
-					activeChar.doRevive(100.00);
-				} else
-				// Festival Participant
-				{
-					instanceId = activeChar.getInstanceId();
-					loc = new Location(activeChar);
-				}
 				break;
 			}
 			case 6: // TODO: agathion ress

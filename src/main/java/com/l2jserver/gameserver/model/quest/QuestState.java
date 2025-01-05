@@ -512,10 +512,7 @@ public final class QuestState {
 	 * @return the current Memo State
 	 */
 	public int getMemoState() {
-		if (isStarted()) {
-			return getInt("memoState");
-		}
-		return -1;
+		return getInt("memoState");
 	}
 	
 	public boolean hasMemoState() {
@@ -536,10 +533,7 @@ public final class QuestState {
 	 * @return the memo state ex
 	 */
 	public int getMemoStateEx(int slot) {
-		if (isStarted()) {
-			return getInt("memoStateEx" + slot);
-		}
-		return 0;
+		return getInt("memoStateEx" + slot);
 	}
 	
 	/**
@@ -1027,10 +1021,6 @@ public final class QuestState {
 	 */
 	public QuestState exitQuest(boolean repeatable) {
 		_player.removeNotifyQuestOfDeath(this);
-		
-		if (!isStarted()) {
-			return this;
-		}
 		
 		// Clean registered quest items
 		getQuest().removeRegisteredQuestItems(_player);

@@ -28,7 +28,6 @@ import com.l2jserver.gameserver.model.L2Object;
 import com.l2jserver.gameserver.model.actor.L2Attackable;
 import com.l2jserver.gameserver.model.actor.L2Character;
 import com.l2jserver.gameserver.model.actor.L2Npc;
-import com.l2jserver.gameserver.model.actor.instance.L2FestivalGuideInstance;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
 import com.l2jserver.gameserver.model.events.EventDispatcher;
 import com.l2jserver.gameserver.model.events.impl.character.npc.NpcCreatureSee;
@@ -67,10 +66,6 @@ public class NpcKnownList extends CharKnownList {
 	public int getDistanceToWatchObject(L2Object object) {
 		if (!(object instanceof L2Character)) {
 			return 0;
-		}
-		
-		if (object instanceof L2FestivalGuideInstance) {
-			return 4000;
 		}
 		
 		if (object.isPlayable()) {

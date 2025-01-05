@@ -23,12 +23,10 @@ import static com.l2jserver.gameserver.config.Configuration.general;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
 import com.l2jserver.gameserver.model.entity.L2Event;
 import com.l2jserver.gameserver.network.SystemMessageId;
 import com.l2jserver.gameserver.network.serverpackets.ActionFailed;
-import com.l2jserver.gameserver.network.serverpackets.SystemMessage;
 import com.l2jserver.gameserver.taskmanager.AttackStanceTaskManager;
 
 /**
@@ -86,21 +84,6 @@ public final class Logout extends L2GameClientPacket {
 			player.sendMessage("A superior power doesn't allow you to leave the event.");
 			player.sendPacket(ActionFailed.STATIC_PACKET);
 			return;
-		}
-		
-		// Prevent player from logging out if they are a festival participant
-		// and it is in progress, otherwise notify party members that the player
-		// is not longer a participant.
-		if (player.isFestivalParticipant()) {
-			if (SevenSignsFestival.getInstance().isFestivalInitialized()) {
-				player.sendMessage("You cannot log out while you are a participant in a Festival.");
-				player.sendPacket(ActionFailed.STATIC_PACKET);
-				return;
-			}
-			
-			if (player.isInParty()) {
-				player.getParty().broadcastPacket(SystemMessage.sendString(player.getName() + " has been removed from the upcoming Festival."));
-			}
 		}
 		
 		// Remove player from Boss Zone

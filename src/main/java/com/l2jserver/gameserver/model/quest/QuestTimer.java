@@ -40,7 +40,9 @@ public class QuestTimer {
 				if (!getIsRepeating()) {
 					cancelAndRemove();
 				}
+				
 				getQuest().notifyEvent(getName(), getNpc(), getPlayer());
+				getQuest().notifyTimerEvent(getName(), getNpc(), getPlayer());
 			} catch (Exception e) {
 				_log.log(Level.SEVERE, "", e);
 			}

@@ -36,7 +36,6 @@ import java.util.logging.Logger;
 
 import com.l2jserver.commons.util.Rnd;
 import com.l2jserver.gameserver.GameTimeController;
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.ThreadPoolManager;
 import com.l2jserver.gameserver.datatables.ItemTable;
 import com.l2jserver.gameserver.enums.PartyDistributionType;
@@ -361,10 +360,6 @@ public class L2Party extends AbstractPlayerGroup {
 			
 			getMembers().remove(player);
 			recalculatePartyLevel();
-			
-			if (player.isFestivalParticipant()) {
-				SevenSignsFestival.getInstance().updateParticipants(player, this);
-			}
 			
 			try {
 				// Channeling a player!

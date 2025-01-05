@@ -23,10 +23,8 @@ import static com.l2jserver.gameserver.config.Configuration.general;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.enums.PrivateStoreType;
 import com.l2jserver.gameserver.instancemanager.AntiFeedManager;
-import com.l2jserver.gameserver.model.L2Party;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
 import com.l2jserver.gameserver.network.L2GameClient;
 import com.l2jserver.gameserver.network.L2GameClient.GameClientState;
@@ -79,23 +77,6 @@ public final class RequestRestart extends L2GameClientPacket {
 			player.sendPacket(SystemMessageId.CANT_RESTART_WHILE_FIGHTING);
 			sendPacket(RestartResponse.valueOf(false));
 			return;
-		}
-		
-		// Prevent player from restarting if they are a festival participant
-		// and it is in progress, otherwise notify party members that the player
-		// is not longer a participant.
-		if (player.isFestivalParticipant()) {
-			if (SevenSignsFestival.getInstance().isFestivalInitialized()) {
-				player.sendMessage("You cannot restart while you are a participant in a festival.");
-				sendPacket(RestartResponse.valueOf(false));
-				return;
-			}
-			
-			final L2Party playerParty = player.getParty();
-			
-			if (playerParty != null) {
-				player.getParty().broadcastString(player.getName() + " has been removed from the upcoming festival.");
-			}
 		}
 		
 		if (player.isBlockedFromExit()) {

@@ -827,6 +827,21 @@ public class Quest extends AbstractScript implements IIdentifiable {
 		return false;
 	}
 	
+	/**
+	 * Notify Event.
+	 * @param event the event
+	 * @param npc the NPC
+	 * @param player the player
+	 */
+	public final void notifyTimerEvent(String event, L2Npc npc, L2PcInstance player) {
+		try {
+			final var result = onTimerEvent(event, npc, player);
+			showResult(player, result, npc);
+		} catch (Exception ex) {
+			showError(player, ex);
+		}
+	}
+	
 	// These are methods that java calls to invoke scripts.
 	
 	/**
@@ -1226,6 +1241,16 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	}
 	
 	/**
+	 * @param event
+	 * @param npc
+	 * @param player
+	 * @return
+	 */
+	public String onTimerEvent(String event, L2Npc npc, L2PcInstance player) {
+		return null;
+	}
+	
+	/**
 	 * Show an error message to the specified player.
 	 * @param player the player to whom to send the error (must be a GM)
 	 * @param t the {@link Throwable} to get the message/stacktrace from
@@ -1302,7 +1327,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 				while (rs.next()) {
 					// Get the ID of the quest and its state
 					String questId = rs.getString("name");
-					String statename = rs.getString("value");
+					String stateName = rs.getString("value");
 					
 					// Search quest associated with the ID
 					Quest q = QuestManager.getInstance().getQuest(questId);
@@ -1317,7 +1342,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 					}
 					
 					// Create a new QuestState for the player that will be added to the player's list of quests
-					new QuestState(q, player, State.getStateId(statename));
+					new QuestState(q, player, State.getStateId(stateName));
 				}
 			}
 			

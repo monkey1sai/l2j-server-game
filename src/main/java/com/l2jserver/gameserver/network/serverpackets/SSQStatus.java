@@ -154,11 +154,13 @@ public class SSQStatus extends L2GameServerPacket {
 					
 					StatsSet highScoreData = SevenSignsFestival.getInstance().getHighestScoreData(SevenSigns.CABAL_DUSK, i);
 					String[] partyMembers = highScoreData.getString("members").split(",");
+					int count = highScoreData.getString("members").isEmpty() ? 0 : partyMembers.length;
 					
-					writeC(partyMembers.length);
-					
-					for (String partyMember : partyMembers) {
-						writeS(partyMember);
+					writeC(count);
+					if (count > 0) {
+						for (String partyMember : partyMembers) {
+							writeS(partyMember);
+						}
 					}
 					
 					// Dawn Score \\
@@ -166,11 +168,13 @@ public class SSQStatus extends L2GameServerPacket {
 					
 					highScoreData = SevenSignsFestival.getInstance().getHighestScoreData(SevenSigns.CABAL_DAWN, i);
 					partyMembers = highScoreData.getString("members").split(",");
+					count = highScoreData.getString("members").isEmpty() ? 0 : partyMembers.length;
 					
-					writeC(partyMembers.length);
-					
-					for (String partyMember : partyMembers) {
-						writeS(partyMember);
+					writeC(count);
+					if (count > 0) {
+						for (String partyMember : partyMembers) {
+							writeS(partyMember);
+						}
 					}
 				}
 				break;

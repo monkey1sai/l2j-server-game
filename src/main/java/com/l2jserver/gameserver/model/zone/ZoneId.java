@@ -45,7 +45,8 @@ public enum ZoneId {
 	ALTERED,
 	NO_BOOKMARK,
 	NO_ITEM_DROP,
-	NO_RESTART;
+	NO_RESTART,
+	SSQZONE;
 	
 	public static int getZoneCount() {
 		return values().length;

@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import com.l2jserver.commons.util.Rnd;
 import com.l2jserver.gameserver.ItemsAutoDestroy;
-import com.l2jserver.gameserver.SevenSigns;
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.ThreadPoolManager;
 import com.l2jserver.gameserver.cache.HtmCache;
 import com.l2jserver.gameserver.data.xml.impl.NpcData;
@@ -850,35 +848,9 @@ public class L2Npc extends L2Character {
 		int npcId = getTemplate().getId();
 		
 		/* For use with Seven Signs implementation */
-		String filename = SevenSigns.SEVEN_SIGNS_HTML_PATH;
+		String filename = null;
 		
 		switch (npcId) {
-			case 31127: //
-			case 31128: //
-			case 31129: // Dawn Festival Guides
-			case 31130: //
-			case 31131: //
-				filename += "festival/dawn_guide.htm";
-				break;
-			case 31137: //
-			case 31138: //
-			case 31139: // Dusk Festival Guides
-			case 31140: //
-			case 31141: //
-				filename += "festival/dusk_guide.htm";
-				break;
-			case 31132:
-			case 31133:
-			case 31134:
-			case 31135:
-			case 31136: // Festival Witches
-			case 31142:
-			case 31143:
-			case 31144:
-			case 31145:
-			case 31146:
-				filename += "festival/festival_witch.htm";
-				break;
 			case 31688:
 				if (player.isNoble()) {
 					filename = Olympiad.OLYMPIAD_HTML_PATH + "noble_main.htm";
@@ -931,7 +903,6 @@ public class L2Npc extends L2Character {
 		}
 		
 		html.replace("%objectId%", String.valueOf(getObjectId()));
-		html.replace("%festivalMins%", SevenSignsFestival.getInstance().getTimeToNextFestivalStr());
 		player.sendPacket(html);
 		
 		// Send a Server->Client ActionFailed to the L2PcInstance in order to avoid that the client wait another packet
@@ -1296,6 +1267,23 @@ public class L2Npc extends L2Character {
 				setChargedShot(ShotType.SPIRITSHOTS, true);
 			}
 		}
+	}
+	
+	/**
+	 * Short wrapper for backward compatibility
+	 * @return stored script value
+	 */
+	public long getScriptValue(String name) {
+		return getVariables().getLong(name);
+	}
+	
+	/**
+	 * Short wrapper for backward compatibility. Stores script value
+	 * @param name name of the script
+	 * @param val value to store
+	 */
+	public void setScriptValue(String name, long val) {
+		getVariables().set(name, val);
 	}
 	
 	/**

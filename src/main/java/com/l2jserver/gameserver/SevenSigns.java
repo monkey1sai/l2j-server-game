@@ -1,5 +1,5 @@
 /*
- * Copyright © 2004-2024 L2J Server
+ * Copyright © 2004-2023 L2J Server
  * 
  * This file is part of L2J Server.
  * 
@@ -70,8 +70,6 @@ import com.l2jserver.gameserver.util.Broadcast;
 public class SevenSigns {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(SevenSigns.class);
-	
-	public static final String SEVEN_SIGNS_HTML_PATH = "data/html/seven_signs/";
 	
 	public static final int CABAL_NULL = 0;
 	public static final int CABAL_DUSK = 1;
@@ -155,7 +153,7 @@ public class SevenSigns {
 	private static final String UPDATE_PLAYER = "UPDATE seven_signs SET cabal=?, seal=?, position=?, paid_type=?, red_stones=?, green_stones=?, blue_stones=?, ancient_adena_amount=?, contribution_score=? WHERE charId=?";
 	
 	private static final String UPDATE_STATUS = "UPDATE seven_signs_status SET current_cycle=?, active_period=?, previous_winner=?, " + "dawn_stone_score=?, dawn_festival_score=?, dusk_stone_score=?, dusk_festival_score=?, "
-		+ "avarice_owner=?, gnosis_owner=?, strife_owner=?, avarice_dawn_score=?, gnosis_dawn_score=?, " + "strife_dawn_score=?, avarice_dusk_score=?, gnosis_dusk_score=?, strife_dusk_score=?, " + "festival_cycle=?, accumulated_bonus0=?, accumulated_bonus1=?, accumulated_bonus2=?,"
+		+ "avarice_owner=?, gnosis_owner=?, strife_owner=?, avarice_dawn_score=?, gnosis_dawn_score=?, " + "strife_dawn_score=?, avarice_dusk_score=?, gnosis_dusk_score=?, strife_dusk_score=?, " + "accumulated_bonus0=?, accumulated_bonus1=?, accumulated_bonus2=?,"
 		+ "accumulated_bonus3=?, accumulated_bonus4=?, date=? WHERE id=0";
 	
 	protected SevenSigns() {
@@ -789,13 +787,12 @@ public class SevenSigns {
 			ps.setInt(14, _signsDuskSealTotals.get(SEAL_AVARICE));
 			ps.setInt(15, _signsDuskSealTotals.get(SEAL_GNOSIS));
 			ps.setInt(16, _signsDuskSealTotals.get(SEAL_STRIFE));
-			ps.setInt(17, SevenSignsFestival.getInstance().getCurrentFestivalCycle());
 			
 			for (int i = 0; i < SevenSignsFestival.FESTIVAL_COUNT; i++) {
-				ps.setInt(18 + i, SevenSignsFestival.getInstance().getAccumulatedBonus(i));
+				ps.setInt(17 + i, SevenSignsFestival.getInstance().getAccumulatedBonus(i));
 			}
 			_lastSave = Calendar.getInstance();
-			ps.setLong(18 + SevenSignsFestival.FESTIVAL_COUNT, _lastSave.getTimeInMillis());
+			ps.setLong(17 + SevenSignsFestival.FESTIVAL_COUNT, _lastSave.getTimeInMillis());
 			ps.execute();
 		} catch (SQLException ex) {
 			LOG.warn("Unable to save data to database!", ex);
@@ -916,6 +913,7 @@ public class SevenSigns {
 	 * Used to add the specified player's seal stone contribution points to the current total for their cabal.<br>
 	 * Returns the point score the contribution was worth.<br>
 	 * Each stone count <B>must be</B> broken down and specified by the stone's color.
+	 * @param objectId
 	 * @param blueCount
 	 * @param greenCount
 	 * @param redCount
@@ -987,6 +985,25 @@ public class SevenSigns {
 			
 			if (_duskFestivalScore >= amount) {
 				_duskFestivalScore -= amount;
+			}
+		}
+	}
+		
+	public void calcFestivalScore() {
+		_dawnFestivalScore = 0;
+		_duskFestivalScore = 0;
+		for (int i = 0; i < 5; i++) {
+			int duskScore = SevenSignsFestival.getInstance().getHighestScore(SevenSigns.CABAL_DUSK, i);
+			int dawnScore = SevenSignsFestival.getInstance().getHighestScore(SevenSigns.CABAL_DAWN, i);
+			
+			if (duskScore > dawnScore) {
+				if (duskScore > 0) {
+					_duskFestivalScore += SevenSignsFestival.FESTIVAL_LEVEL_SCORES[i];
+				}
+			} else {
+				if (dawnScore > 0) {
+					_dawnFestivalScore += SevenSignsFestival.FESTIVAL_LEVEL_SCORES[i];
+				}
 			}
 		}
 	}
@@ -1212,9 +1229,6 @@ public class SevenSigns {
 			switch (periodEnded) {
 				case PERIOD_COMP_RECRUITING: // Initialization
 					
-					// Start the Festival of Darkness cycle.
-					SevenSignsFestival.getInstance().startFestivalManager();
-					
 					// Send message that Competition has begun.
 					sendMessageToAll(QUEST_EVENT_PERIOD_BEGUN);
 					break;
@@ -1225,8 +1239,7 @@ public class SevenSigns {
 					
 					int compWinner = getCabalHighestScore();
 					
-					// Schedule a stop of the festival engine and reward highest ranking members from cycle
-					SevenSignsFestival.getInstance().getFestivalManagerSchedule().cancel(false);
+					// Reward highest ranking members from cycle
 					SevenSignsFestival.getInstance().rewardHighestRanked();
 					
 					calcNewSealOwners();

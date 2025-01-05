@@ -18,28 +18,19 @@
  */
 package com.l2jserver.gameserver.model.actor.instance;
 
-import com.l2jserver.gameserver.SevenSignsFestival;
 import com.l2jserver.gameserver.enums.InstanceType;
-import com.l2jserver.gameserver.model.L2Party;
 import com.l2jserver.gameserver.model.actor.L2Character;
 import com.l2jserver.gameserver.model.actor.templates.L2NpcTemplate;
-import com.l2jserver.gameserver.model.items.instance.L2ItemInstance;
-import com.l2jserver.gameserver.network.serverpackets.InventoryUpdate;
 
 /**
  * This class manages all attackable festival NPCs, spawned during the Festival of Darkness.
  * @author Tempy
  */
 public class L2FestivalMonsterInstance extends L2MonsterInstance {
-	protected int _bonusMultiplier = 1;
 	
 	public L2FestivalMonsterInstance(L2NpcTemplate template) {
 		super(template);
 		setInstanceType(InstanceType.L2FestivalMonsterInstance);
-	}
-	
-	public void setOfferingBonus(int bonusMultiplier) {
-		_bonusMultiplier = bonusMultiplier;
 	}
 	
 	/**
@@ -64,40 +55,5 @@ public class L2FestivalMonsterInstance extends L2MonsterInstance {
 	@Override
 	public boolean hasRandomAnimation() {
 		return false;
-	}
-	
-	/**
-	 * Actions:
-	 * <ul>
-	 * <li>Check if the killing object is a player, and then find the party they belong to.</li>
-	 * <li>Add a blood offering item to the leader of the party.</li>
-	 * <li>Update the party leader's inventory to show the new item addition.</li>
-	 * </ul>
-	 */
-	@Override
-	public void doItemDrop(L2Character lastAttacker) {
-		if (!(lastAttacker instanceof L2PcInstance killingChar)) {
-			return;
-		}
-		
-		L2Party associatedParty = killingChar.getParty();
-		if (associatedParty == null) {
-			return;
-		}
-		
-		L2PcInstance partyLeader = associatedParty.getLeader();
-		L2ItemInstance addedOfferings = partyLeader.getInventory().addItem("Sign", SevenSignsFestival.FESTIVAL_OFFERING_ID, _bonusMultiplier, partyLeader, this);
-		
-		InventoryUpdate iu = new InventoryUpdate();
-		
-		if (addedOfferings.getCount() != _bonusMultiplier) {
-			iu.addModifiedItem(addedOfferings);
-		} else {
-			iu.addNewItem(addedOfferings);
-		}
-		
-		partyLeader.sendPacket(iu);
-		
-		super.doItemDrop(lastAttacker); // Normal drop
 	}
 }

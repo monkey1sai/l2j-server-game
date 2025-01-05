@@ -61,11 +61,6 @@ public class ConditionOpResurrection extends Condition {
 			effector.sendPacket(CANNOT_BE_RESURRECTED_DURING_SIEGE);
 			return false;
 		}
-		
-		if (player.isFestivalParticipant()) {
-			effector.sendMessage("You may not resurrect participants in a festival.");
-			return false;
-		}
 		return true;
 	}
 }
