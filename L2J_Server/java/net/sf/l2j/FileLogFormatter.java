@@ -38,7 +38,7 @@ public class FileLogFormatter extends Formatter
 	 * @see java.util.logging.Formatter#format(java.util.logging.LogRecord)
 	 */
 	private static final String CRLF = "\r\n";
-	private static final String _ = "\t";
+	private static final String TAB = "\t";
 	private SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss,SSS");
 	
 	public String format(LogRecord record)
@@ -47,13 +47,13 @@ public class FileLogFormatter extends Formatter
 		
 		return output
 		.append(dateFmt.format(new Date(record.getMillis())))
-		.append(_)
+		.append(TAB)
 		.append(record.getLevel().getName())
-		.append(_)
+		.append(TAB)
 		.append(record.getThreadID())
-		.append(_)
+		.append(TAB)
 		.append(record.getLoggerName())
-		.append(_)
+		.append(TAB)
 		.append(record.getMessage())
 		.append(CRLF)
 		.toString();

@@ -89,7 +89,7 @@ public class ClanTable
 	 */
 	public L2Clan getClan(int clanId)
 	{
-        L2Clan clan = _clans.get(new Integer(clanId));
+        L2Clan clan = _clans.get(clanId);
        /* if (clan == null)
         {
             clan = new L2Clan(clanId);
@@ -204,7 +204,7 @@ public class ClanTable
 
             if (Config.DEBUG) _log.fine("New clan created: "+clan.getClanId() + " " +clan.getName());
             
-            _clans.put(new Integer(clan.getClanId()), clan);
+            _clans.put(clan.getClanId(), clan);
         }
 		
 		return clan;

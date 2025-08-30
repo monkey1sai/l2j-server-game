@@ -509,7 +509,7 @@ public class LoginController
 
             if (password != lastPassword)
             {
-                _hackProtection.put(address.getHostAddress(), new Integer(failedCount));
+                _hackProtection.put(address.getHostAddress(), failedCount);
                 _lastPassword.put(address.getHostAddress(), password);
             }
         }

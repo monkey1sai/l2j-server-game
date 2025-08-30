@@ -470,7 +470,7 @@ public final class ClientThread
         for (int i = 0; i < chars.length; i++)
         {
             int objectId = chars[i].getObjectId();
-            _charSlotMapping.add(new Integer(objectId));
+            _charSlotMapping.add(objectId);
         }
     }
     /**

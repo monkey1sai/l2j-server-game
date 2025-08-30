@@ -124,7 +124,7 @@ public class RecipeController
 	{
 		for (int i = 0; i < _lists.size(); i++)
 		{
-			L2RecipeList find = _lists.get(new Integer(i));
+			L2RecipeList find = _lists.get(i);
 			if (find.getRecipeId() == itemId)
 			{
 				return find;
@@ -137,7 +137,7 @@ public class RecipeController
     {
         for (int i = 0; i < _lists.size(); i++)
         {
-            L2RecipeList find = _lists.get(new Integer(i));
+            L2RecipeList find = _lists.get(i);
             if (find.getId() == recId)
             {
                 return find;
@@ -279,7 +279,7 @@ public class RecipeController
 			{
 				recipeList.addRecipe(recipePart);
 			}
-			_lists.put(new Integer(_lists.size()), recipeList);
+			_lists.put(_lists.size(), recipeList);
 		}
 		catch (Exception e)
 		{

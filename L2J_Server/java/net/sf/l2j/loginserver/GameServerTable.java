@@ -178,7 +178,7 @@ public class GameServerTable
 				{
 					if(xpp.getName().toString().equals("server"))
 					{
-						Integer id = new Integer(xpp.getAttributeValue(null,"id").toString());
+						Integer id = Integer.valueOf(xpp.getAttributeValue(null,"id").toString());
 						String name = xpp.getAttributeValue(null,"name").toString();
 						serverNames.put(id,name);
 					}

@@ -506,7 +506,7 @@ public final class SelectorThread extends Thread {
 			int sz = buf.getShort() & 0xFFFF;
             if (sz > 1)
                 sz -= 2;
-			ByteBuffer b = (ByteBuffer)buf.slice().limit(sz);
+			ByteBuffer b = buf.slice().limit(sz);
 			b.order(ByteOrder.LITTLE_ENDIAN);
 			buf.position(buf.position()+sz); // read message fully
 			con.decript(b);
@@ -772,7 +772,7 @@ public final class SelectorThread extends Thread {
 
             if (count == null)  
             {  
-                count   = new Long(1);
+                count   = 1L;
             }
             else
             {  
@@ -781,7 +781,7 @@ public final class SelectorThread extends Thread {
 
             if (bytes == null)  
             {  
-                bytes   = new Long(msg.getLength());
+                bytes   = Long.valueOf(msg.getLength());
             }
             else
             {  

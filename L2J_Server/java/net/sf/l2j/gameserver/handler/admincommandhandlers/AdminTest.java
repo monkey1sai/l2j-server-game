@@ -186,7 +186,7 @@ public class AdminTest implements IAdminCommandHandler
             L2World.getInstance().addVisibleObject(node, L2World.getInstance().getRegion(0, 0), null);
         }
         end                 = System.currentTimeMillis();
-        long timeStore      = new Long(end - start);//System.out.println(System.currentTimeMillis());
+        long timeStore      = end - start;
         
         start               = System.currentTimeMillis();
         for (WayPointNode node : nodes)

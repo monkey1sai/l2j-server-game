@@ -4511,8 +4511,7 @@ public abstract class L2Character extends L2Object
 		if (_disabledSkills == null)
 			return;
 		
-		_disabledSkills.remove(new Integer(skillId));
-		
+		_disabledSkills.remove(Integer.valueOf(skillId));
 	}
 	
 	/**

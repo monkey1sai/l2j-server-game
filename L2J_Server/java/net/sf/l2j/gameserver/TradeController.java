@@ -133,7 +133,7 @@ public class TradeController
                 	_log.warning("TradeController: Problem with buylist "+buy1.getListId()+" item "+itemId);
                 }
 
-				_lists.put(new Integer(buy1.getListId()), buy1);
+				_lists.put(buy1.getListId(), buy1);
 				_nextListId = Math.max(_nextListId, buy1.getListId()+1);
 			}
 			
@@ -176,15 +176,14 @@ public class TradeController
 				itemCreated++;
 			}
 		
-		_lists.put(new Integer(buy1.getListId()), buy1);
+		_lists.put(buy1.getListId(), buy1);
 		return itemCreated;
 	}
 
 	public L2TradeList getBuyList(int listId)
 	{
-		return _lists.get(new Integer(listId));
+		return _lists.get(listId);
 	}
-
 
 	/**
 	 * @return

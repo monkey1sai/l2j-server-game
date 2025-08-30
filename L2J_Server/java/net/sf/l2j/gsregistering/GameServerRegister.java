@@ -59,7 +59,7 @@ public class GameServerRegister
 			{
 				try
 				{
-					int id = new Integer(_choice).intValue();
+					int id = Integer.parseInt(_choice);
 					if(id >= gsTable.serverNames.size())
 					{
 						System.out.println("ID is too high (max is "+(gsTable.serverNames.size()-1)+")");

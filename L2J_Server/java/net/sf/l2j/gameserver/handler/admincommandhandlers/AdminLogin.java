@@ -73,16 +73,16 @@ public class AdminLogin implements IAdminCommandHandler
 			if (st.countTokens() > 1)
             {
                 st.nextToken();
-                String number = st.nextToken();
                 try
                 {
-                	LoginServerThread.getInstance().setMaxPlayer(new Integer(number).intValue());
-                	activeChar.sendMessage("maxPlayer set to "+new Integer(number).intValue());
+                    final int maxPlayers = Integer.parseInt(st.nextToken());
+                	LoginServerThread.getInstance().setMaxPlayer(maxPlayers);
+                	activeChar.sendMessage("Maximum players set to " + maxPlayers + ".");
                 	showWindow(activeChar);
                 }
                 catch(NumberFormatException e)
                 {
-                	activeChar.sendMessage("Max players must be a number.");
+                	activeChar.sendMessage("Maximum players must be a number.");
                 }
             }
 			else

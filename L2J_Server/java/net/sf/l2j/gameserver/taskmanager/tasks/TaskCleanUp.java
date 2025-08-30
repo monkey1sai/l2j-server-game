@@ -23,7 +23,6 @@ public final class TaskCleanUp extends Task
 
     public void onTimeElapsed(ExecutedTask task)
     {
-        System.runFinalization();
         System.gc();
     }
     

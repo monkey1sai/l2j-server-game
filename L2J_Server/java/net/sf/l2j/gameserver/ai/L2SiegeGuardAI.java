@@ -79,7 +79,7 @@ public class L2SiegeGuardAI extends L2CharacterAI implements Runnable
         _attack_timeout = Integer.MAX_VALUE;
         _globalAggro = -10; // 10 seconds timeout of ATTACK after respawn
 
-        attackRange = ((L2Attackable) _actor).getPhysicalAttackRange();
+        attackRange = _actor.getPhysicalAttackRange();
     }
 
     public void run()

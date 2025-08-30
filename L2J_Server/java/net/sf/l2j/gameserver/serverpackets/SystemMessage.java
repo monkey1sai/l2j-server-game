@@ -558,7 +558,7 @@ public class SystemMessage extends ServerBasePacket
 	
 	public SystemMessage addString(String text)
 	{
-		_types.add(new Integer(TYPE_TEXT));
+		_types.add(TYPE_TEXT);
 		_values.add(text);
         
         return this;
@@ -566,31 +566,31 @@ public class SystemMessage extends ServerBasePacket
 
 	public SystemMessage addNumber(int number)
 	{
-		_types.add(new Integer(TYPE_NUMBER));
-		_values.add(new Integer(number));
+		_types.add(TYPE_NUMBER);
+		_values.add(number);
         return this;
 	}
 	
 	public SystemMessage addNpcName(int id)
 	{
-		_types.add(new Integer(TYPE_NPC_NAME));
-		_values.add(new Integer(1000000 + id));
+		_types.add(TYPE_NPC_NAME);
+		_values.add(1000000 + id);
         
         return this;
 	}
 
 	public SystemMessage addItemName(int id)
 	{
-		_types.add(new Integer(TYPE_ITEM_NAME));
-		_values.add(new Integer(id));
+		_types.add(TYPE_ITEM_NAME);
+		_values.add(id);
         
         return this;
 	}
 
 	public SystemMessage addSkillName(int id)
 	{
-		_types.add(new Integer(TYPE_SKILL_NAME));
-		_values.add(new Integer(id));
+		_types.add(TYPE_SKILL_NAME);
+		_values.add(id);
         
         return this;
 	}

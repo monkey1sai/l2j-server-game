@@ -57,14 +57,14 @@ public class UserCommandHandler
 		for (int i = 0; i < ids.length; i++)
 		{
 			if (Config.DEBUG) _log.fine("Adding handler for user command "+ids[i]);
-			_datatable.put(new Integer(ids[i]), handler);
+			_datatable.put(ids[i], handler);
 		}
 	}
 	
 	public IUserCommandHandler getUserCommandHandler(int userCommand)
 	{
 		if (Config.DEBUG) _log.fine("getting handler for user command: "+userCommand);
-		return _datatable.get(new Integer(userCommand));
+		return _datatable.get(userCommand);
 	}
 
     /**

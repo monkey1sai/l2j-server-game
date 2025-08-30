@@ -210,7 +210,7 @@ public final class L2NpcTemplate extends L2CharTemplate
 	{
 		if (_resists == null)
 			_resists = new FastMap<Stats, Integer>();
-		_resists.put(id, new Integer(resist));
+		_resists.put(id, resist);
 	}
     public int getResist(Stats id)
 	{

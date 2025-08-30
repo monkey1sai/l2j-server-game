@@ -1,5 +1,6 @@
 package net.sf.l2j.gameserver.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,12 +59,11 @@ public class MultiSort
 
     private final List<Integer> getIntList(int[] valueList)
     {
-        Integer[] tempIntList = new Integer[valueList.length];
-        
-        for (int i = 0; i < valueList.length; i++)
-            tempIntList[i] = new Integer(valueList[i]);
-        
-        return Arrays.asList(tempIntList);
+        final List<Integer> result = new ArrayList<>(valueList.length);
+        for (int i : valueList) {
+            result.add(Integer.valueOf(i));
+        }
+        return result;
     }
     
 	private final List<?> getList(Collection<?> valueList)

@@ -608,7 +608,7 @@ public class L2NpcInstance extends L2Character
             html1.append("<table border=\"0\" width=\"100%\">");
             html1.append("<tr><td>Object ID</td><td>"+getObjectId()+"</td><td>NPC ID</td><td>"+getTemplate().npcId+"</td></tr>");
             html1.append("<tr><td>Castle</td><td>"+getCastle().getCastleId()+"</td><td>Coords</td><td>"+getX()+","+getY()+","+getZ()+"</td></tr>");
-            html1.append("<tr><td>Level</td><td>"+getLevel()+"</td><td>Aggro</td><td>"+((this instanceof L2Attackable)? ((L2Attackable)this).getAggroRange() : 0)+"</td></tr>");
+            html1.append("<tr><td>Level</td><td>"+getLevel()+"</td><td>Aggro</td><td>"+((this instanceof L2Attackable)? getAggroRange() : 0)+"</td></tr>");
             html1.append("</table><br>");
             
             html1.append("<font color=\"LEVEL\">Combat</font>");
