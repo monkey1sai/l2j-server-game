@@ -46,7 +46,7 @@ public class ExBR_AgathionEnergyInfo extends L2GameServerPacket {
 			writeD(agathion.getId());
 			writeD(0x200000);
 			writeD(agathion.getAgathionRemainingEnergy());
-			writeD(AgathionRepository.getInstance().getByItemId(agathion.getId()).getEnergy());
+			writeD(AgathionRepository.getInstance().getByItemId(agathion.getId()).energy());
 		}
 	}
 }

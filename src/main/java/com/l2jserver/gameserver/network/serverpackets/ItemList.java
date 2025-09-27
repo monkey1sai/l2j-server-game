@@ -50,7 +50,7 @@ public final class ItemList extends AbstractItemPacket {
 			}
 			
 			final var agathion = AgathionRepository.getInstance().getByItemId(item.getId());
-			if ((agathion != null) && (agathion.getMaxEnergy() > 0)) {
+			if ((agathion != null) && (agathion.maxEnergy() > 0)) {
 				agathions.add(item);
 			}
 		}

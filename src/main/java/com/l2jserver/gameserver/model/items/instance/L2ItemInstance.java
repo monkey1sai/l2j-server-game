@@ -207,7 +207,7 @@ public final class L2ItemInstance extends L2Object {
 		_time = _item.getTime() == -1 ? -1 : System.currentTimeMillis() + ((long) _item.getTime() * 60 * 1000);
 		scheduleLifeTimeTask();
 		final var agathionInfo = AgathionRepository.getInstance().getByItemId(itemId);
-		agathionEnergy = agathionInfo == null ? 0 : agathionInfo.getMaxEnergy();
+		agathionEnergy = agathionInfo == null ? 0 : agathionInfo.maxEnergy();
 	}
 	
 	/**
@@ -230,7 +230,7 @@ public final class L2ItemInstance extends L2Object {
 		_time = _item.getTime() == -1 ? -1 : System.currentTimeMillis() + ((long) _item.getTime() * 60 * 1000);
 		scheduleLifeTimeTask();
 		final var agathionInfo = AgathionRepository.getInstance().getByItemId(item.getId());
-		agathionEnergy = agathionInfo == null ? 0 : agathionInfo.getMaxEnergy();
+		agathionEnergy = agathionInfo == null ? 0 : agathionInfo.maxEnergy();
 	}
 	
 	@Override

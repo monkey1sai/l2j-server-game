@@ -1831,7 +1831,7 @@ public final class L2PcInstance extends L2Playable {
 		
 		// If item is agathion with energy, then send info to client.
 		final var agathionInfo = AgathionRepository.getInstance().getByItemId(item.getId());
-		if ((agathionInfo != null) && (agathionInfo.getMaxEnergy() > 0)) {
+		if ((agathionInfo != null) && (agathionInfo.maxEnergy() > 0)) {
 			sendPacket(new ExBR_AgathionEnergyInfo(List.of(item)));
 		}
 		
