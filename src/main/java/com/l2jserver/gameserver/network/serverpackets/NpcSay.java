@@ -18,6 +18,8 @@
  */
 package com.l2jserver.gameserver.network.serverpackets;
 
+import static com.l2jserver.gameserver.config.Configuration.customs;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,9 +27,15 @@ import com.l2jserver.gameserver.model.actor.L2Npc;
 import com.l2jserver.gameserver.network.NpcStringId;
 
 /**
+ * NpcSay server packet implementation.
  * @author Kerberos
+ * @author Zoey76
  */
 public final class NpcSay extends L2GameServerPacket {
+	
+	private static final int NO_NPC_STRING_ID = -1;
+	private static final String[] NO_PARAMETERS = new String[] {};
+	
 	private final int _objectId;
 	private final int _textType;
 	private final int _npcId;
@@ -39,7 +47,7 @@ public final class NpcSay extends L2GameServerPacket {
 		_objectId = objectId;
 		_textType = messageType;
 		_npcId = 1000000 + npcId;
-		_npcString = -1;
+		_npcString = NO_NPC_STRING_ID;
 		_text = text;
 	}
 	
@@ -47,7 +55,7 @@ public final class NpcSay extends L2GameServerPacket {
 		_objectId = npc.getObjectId();
 		_textType = messageType;
 		_npcId = 1000000 + npc.getId();
-		_npcString = -1;
+		_npcString = NO_NPC_STRING_ID;
 		_text = text;
 	}
 	
@@ -102,8 +110,25 @@ public final class NpcSay extends L2GameServerPacket {
 		writeD(_objectId);
 		writeD(_textType);
 		writeD(_npcId);
+		
+		// The way Npc String translation works, is by checking and getting
+		// the translation from the XML for the player's language, and
+		// sending it back to the client as a text with all the parameters hardcoded,
+		// and preventing the original Npc String from being delivered.
+		if (customs().multiLangEnable() && customs().multiLangNpcStringEnable()) {
+			final var lang = getClient().getActiveChar().getLang();
+			if (customs().getMultiLangNpcStringAllowed().contains(lang)) {
+				final var ns = NpcStringId.getNpcStringId(_npcString).getLocalisation(lang);
+				if (ns != null) {
+					writeD(NO_NPC_STRING_ID);
+					writeS(ns.build(_parameters == null ? NO_PARAMETERS : _parameters.toArray()));
+					return;
+				}
+			}
+		}
+		
 		writeD(_npcString);
-		if (_npcString == -1) {
+		if (_npcString == NO_NPC_STRING_ID) {
 			writeS(_text);
 		} else if (_parameters != null) {
 			for (String s : _parameters) {

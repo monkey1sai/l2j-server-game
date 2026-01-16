@@ -22,7 +22,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.aeonbits.owner.Config.HotReloadType.ASYNC;
 import static org.aeonbits.owner.Config.LoadType.MERGE;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -267,13 +266,13 @@ public interface CustomsConfiguration extends Reloadable {
 	boolean multiLangSystemMessageEnable();
 	
 	@Key("MultiLangSystemMessageAllowed")
-	List<String> getMultiLangSystemMessageAllowed();
+	Set<String> getMultiLangSystemMessageAllowed();
 	
 	@Key("MultiLangNpcStringEnable")
 	boolean multiLangNpcStringEnable();
 	
 	@Key("MultiLangNpcStringAllowed")
-	List<String> getMultiLangNpcStringAllowed();
+	Set<String> getMultiLangNpcStringAllowed();
 	
 	@Key("L2WalkerProtection")
 	boolean l2WalkerProtection();

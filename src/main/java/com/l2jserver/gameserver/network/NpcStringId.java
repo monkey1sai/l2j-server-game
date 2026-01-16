@@ -24,30 +24,24 @@ import static com.l2jserver.gameserver.config.Configuration.server;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 
-import com.l2jserver.gameserver.model.clientstrings.Builder;
+import com.l2jserver.gameserver.model.clientstrings.Localization;
 import com.l2jserver.gameserver.network.serverpackets.ExShowScreenMessage;
 
 /**
- * NpcStringId implementation, based on SystemMessageId class
+ * NpcStringId implementation.
  * @author mrTJO
+ * @author Zoey76
  */
 public final class NpcStringId {
 	private static final Logger LOG = LoggerFactory.getLogger(NpcStringId.class);
-	private static final NSLocalisation[] EMPTY_NSL_ARRAY = new NSLocalisation[0];
-	public static final NpcStringId[] EMPTY_ARRAY = new NpcStringId[0];
 	
 	/**
 	 * ID: 1<br>
@@ -25272,24 +25266,18 @@ public final class NpcStringId {
 	}
 	
 	public static void reloadLocalisations() {
-		for (final NpcStringId nsId : VALUES.values()) {
+		for (var nsId : VALUES.values()) {
 			if (nsId != null) {
 				nsId.removeAllLocalisations();
 			}
 		}
 		
-		if (!customs().multiLangNpcStringEnable()) {
-			LOG.info("MultiLanguage disabled.");
-			return;
-		}
-		
-		final List<String> languages = customs().getMultiLangNpcStringAllowed();
-		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		final var factory = DocumentBuilderFactory.newInstance();
 		factory.setValidating(false);
 		factory.setIgnoringComments(true);
 		
-		for (final String lang : languages) {
-			File file = new File(server().getDatapackRoot(), "data/lang/" + lang + "/ns/NpcStringLocalisation.xml");
+		for (var lang : customs().getMultiLangNpcStringAllowed()) {
+			final var file = new File(server().getDatapackRoot(), "data/lang/" + lang + "/ns/NpcStringLocalisation.xml");
 			if (!file.isFile()) {
 				continue;
 			}
@@ -25297,13 +25285,13 @@ public final class NpcStringId {
 			LOG.info("Loading localisation for '{}'", lang);
 			
 			try {
-				Document doc = factory.newDocumentBuilder().parse(file);
-				for (Node na = doc.getFirstChild(); na != null; na = na.getNextSibling()) {
+				final var doc = factory.newDocumentBuilder().parse(file);
+				for (var na = doc.getFirstChild(); na != null; na = na.getNextSibling()) {
 					if ("list".equals(na.getNodeName())) {
-						for (Node nb = na.getFirstChild(); nb != null; nb = nb.getNextSibling()) {
+						for (var nb = na.getFirstChild(); nb != null; nb = nb.getNextSibling()) {
 							if ("ns".equals(nb.getNodeName())) {
-								NamedNodeMap nnmb = nb.getAttributes();
-								Node node = nnmb.getNamedItem("id");
+								final var nnmb = nb.getAttributes();
+								var node = nnmb.getNamedItem("id");
 								NpcStringId nsId;
 								if (node != null) {
 									nsId = getNpcStringId(Integer.parseInt(node.getNodeValue()));
@@ -25326,7 +25314,7 @@ public final class NpcStringId {
 									continue;
 								}
 								
-								String text = node.getNodeValue();
+								final var text = node.getNodeValue();
 								if (text.isEmpty() || (text.length() > 255)) {
 									LOG.warn("Invalid text defined for NSID '{}' (to long or empty), lang '{}'.", nsId, lang);
 									continue;
@@ -25345,20 +25333,20 @@ public final class NpcStringId {
 	
 	private final int _id;
 	private String _name;
-	private byte _params;
-	private NSLocalisation[] _localisations;
+	private int _params;
+	private Map<String, Localization> _localisations;
 	private ExShowScreenMessage _staticScreenMessage;
 	
-	private NpcStringId(final int id) {
+	private NpcStringId(int id) {
 		_id = id;
-		_localisations = EMPTY_NSL_ARRAY;
+		_localisations = null;
 	}
 	
 	public int getId() {
 		return _id;
 	}
 	
-	private void setName(final String name) {
+	private void setName(String name) {
 		_name = name;
 	}
 	
@@ -25370,11 +25358,7 @@ public final class NpcStringId {
 		return _params;
 	}
 	
-	/**
-	 * You better don`t touch this!
-	 * @param params
-	 */
-	public void setParamCount(final int params) {
+	public void setParamCount(int params) {
 		if (params < 0) {
 			throw new IllegalArgumentException("Invalid negative param count: " + params);
 		}
@@ -25387,59 +25371,34 @@ public final class NpcStringId {
 			_staticScreenMessage = null;
 		}
 		
-		_params = (byte) params;
+		_params = params;
 	}
 	
-	public NSLocalisation getLocalisation(final String lang) {
-		NSLocalisation nsl;
-		for (int i = _localisations.length; i-- > 0;) {
-			nsl = _localisations[i];
-			if (nsl.getLanguage().hashCode() == lang.hashCode()) {
-				return nsl;
-			}
+	public Localization getLocalisation(String lang) {
+		return (_localisations == null) ? null : _localisations.get(lang);
+	}
+	
+	public void attachLocalizedText(String lang, String text) {
+		if (_localisations == null) {
+			_localisations = new HashMap<>();
 		}
-		return null;
-	}
-	
-	public void attachLocalizedText(final String lang, final String text) {
-		final int length = _localisations.length;
-		final NSLocalisation[] localisations = Arrays.copyOf(_localisations, length + 1);
-		localisations[length] = new NSLocalisation(lang, text);
-		_localisations = localisations;
+		_localisations.put(lang, new Localization(lang, text));
 	}
 	
 	public void removeAllLocalisations() {
-		_localisations = EMPTY_NSL_ARRAY;
+		_localisations = null;
 	}
 	
 	public ExShowScreenMessage getStaticScreenMessage() {
 		return _staticScreenMessage;
 	}
 	
-	public void setStaticSystemMessage(final ExShowScreenMessage ns) {
+	public void setStaticSystemMessage(ExShowScreenMessage ns) {
 		_staticScreenMessage = ns;
 	}
 	
 	@Override
 	public String toString() {
 		return "NS[" + getId() + ":" + getName() + "]";
-	}
-	
-	public static final class NSLocalisation {
-		private final String _lang;
-		private final Builder _builder;
-		
-		public NSLocalisation(final String lang, final String text) {
-			_lang = lang;
-			_builder = Builder.newBuilder(text);
-		}
-		
-		public String getLanguage() {
-			return _lang;
-		}
-		
-		public final String getLocalisation(final Object... params) {
-			return _builder.toString(params);
-		}
 	}
 }

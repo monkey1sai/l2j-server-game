@@ -140,6 +140,8 @@ import com.l2jserver.gameserver.model.events.EventDispatcher;
 import com.l2jserver.gameserver.model.olympiad.Olympiad;
 import com.l2jserver.gameserver.network.L2GameClient;
 import com.l2jserver.gameserver.network.L2GamePacketHandler;
+import com.l2jserver.gameserver.network.NpcStringId;
+import com.l2jserver.gameserver.network.SystemMessageId;
 import com.l2jserver.gameserver.pathfinding.PathFinding;
 import com.l2jserver.gameserver.script.faenor.FaenorScriptEngine;
 import com.l2jserver.gameserver.scripting.ScriptEngineManager;
@@ -413,6 +415,17 @@ public final class GameServer {
 		if ((customs().offlineTradeEnable() || customs().offlineCraftEnable()) && customs().restoreOffliners()) {
 			OfflineTradersTable.getInstance().restoreOfflineTraders();
 		}
+		
+		// Multilingual Support
+		if (customs().multiLangEnable()) {
+			if (customs().multiLangSystemMessageEnable()) {
+				SystemMessageId.reloadLocalisations();
+			}
+			if (customs().multiLangNpcStringEnable()) {
+				NpcStringId.reloadLocalisations();
+			}
+		}
+		
 		endTimedSection("Other", otherStart);
 		
 		if (general().deadLockDetector()) {

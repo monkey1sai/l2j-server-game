@@ -24,20 +24,15 @@ import static com.l2jserver.gameserver.config.Configuration.server;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 
-import com.l2jserver.gameserver.model.clientstrings.Builder;
+import com.l2jserver.gameserver.model.clientstrings.Localization;
 import com.l2jserver.gameserver.network.serverpackets.SystemMessage;
 
 /**
@@ -47,12 +42,10 @@ import com.l2jserver.gameserver.network.serverpackets.SystemMessage;
  * @author crion
  * @author Forsaiken
  * @author Zealar
+ * @author Zoey76
  */
 public final class SystemMessageId {
 	private static final Logger LOG = LoggerFactory.getLogger(SystemMessageId.class);
-	
-	private static final SMLocalisation[] EMPTY_SML_ARRAY = new SMLocalisation[0];
-	public static final SystemMessageId[] EMPTY_ARRAY = new SystemMessageId[0];
 	
 	/**
 	 * Map containing all SystemMessageIds.
@@ -15301,24 +15294,18 @@ public final class SystemMessageId {
 	}
 	
 	public static void reloadLocalisations() {
-		for (final SystemMessageId smId : VALUES.values()) {
+		for (var smId : VALUES.values()) {
 			if (smId != null) {
 				smId.removeAllLocalisations();
 			}
 		}
 		
-		if (!customs().multiLangSystemMessageEnable()) {
-			LOG.info("MultiLanguage disabled.");
-			return;
-		}
-		
-		final List<String> languages = customs().getMultiLangSystemMessageAllowed();
-		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		final var factory = DocumentBuilderFactory.newInstance();
 		factory.setValidating(false);
 		factory.setIgnoringComments(true);
 		
-		for (String lang : languages) {
-			File file = new File(server().getDatapackRoot(), "data/lang/" + lang + "/sm/SystemMessageLocalisation.xml");
+		for (var lang : customs().getMultiLangSystemMessageAllowed()) {
+			final var file = new File(server().getDatapackRoot(), "data/lang/" + lang + "/sm/SystemMessageLocalisation.xml");
 			if (!file.isFile()) {
 				continue;
 			}
@@ -15326,13 +15313,13 @@ public final class SystemMessageId {
 			LOG.info("Loading localisation for '{}'", lang);
 			
 			try {
-				Document doc = factory.newDocumentBuilder().parse(file);
-				for (Node na = doc.getFirstChild(); na != null; na = na.getNextSibling()) {
+				final var doc = factory.newDocumentBuilder().parse(file);
+				for (var na = doc.getFirstChild(); na != null; na = na.getNextSibling()) {
 					if ("list".equals(na.getNodeName())) {
-						for (Node nb = na.getFirstChild(); nb != null; nb = nb.getNextSibling()) {
+						for (var nb = na.getFirstChild(); nb != null; nb = nb.getNextSibling()) {
 							if ("sm".equals(nb.getNodeName())) {
-								NamedNodeMap nnmb = nb.getAttributes();
-								Node node = nnmb.getNamedItem("id");
+								final var nnmb = nb.getAttributes();
+								var node = nnmb.getNamedItem("id");
 								SystemMessageId smId;
 								if (node != null) {
 									smId = getSystemMessageId(Integer.parseInt(node.getNodeValue()));
@@ -15351,7 +15338,7 @@ public final class SystemMessageId {
 									continue;
 								}
 								
-								String text = node.getNodeValue();
+								final var text = node.getNodeValue();
 								if (text.isEmpty() || (text.length() > 255)) {
 									LOG.warn("Invalid text defined for SMID '{}' (to long or empty), lang '{}'.", smId, lang);
 									continue;
@@ -15370,13 +15357,13 @@ public final class SystemMessageId {
 	
 	private final int _id;
 	private String _name;
-	private byte _params;
-	private SMLocalisation[] _localisations;
+	private int _params;
+	private Map<String, Localization> _localisations;
 	private SystemMessage _staticSystemMessage;
 	
-	private SystemMessageId(final int id) {
+	private SystemMessageId(int id) {
 		_id = id;
-		_localisations = EMPTY_SML_ARRAY;
+		_localisations = null;
 	}
 	
 	public int getId() {
@@ -15395,11 +15382,7 @@ public final class SystemMessageId {
 		return _params;
 	}
 	
-	/**
-	 * You better don`t touch this!
-	 * @param params
-	 */
-	public void setParamCount(final int params) {
+	public void setParamCount(int params) {
 		if (params < 0) {
 			throw new IllegalArgumentException("Invalid negative param count: " + params);
 		}
@@ -15412,59 +15395,34 @@ public final class SystemMessageId {
 			_staticSystemMessage = null;
 		}
 		
-		_params = (byte) params;
+		_params = params;
 	}
 	
-	public SMLocalisation getLocalisation(final String lang) {
-		SMLocalisation sml;
-		for (int i = _localisations.length; i-- > 0;) {
-			sml = _localisations[i];
-			if (sml.getLanguage().hashCode() == lang.hashCode()) {
-				return sml;
-			}
+	public Localization getLocalisation(String lang) {
+		return (_localisations == null) ? null : _localisations.get(lang);
+	}
+	
+	public void attachLocalizedText(String lang, String text) {
+		if (_localisations == null) {
+			_localisations = new HashMap<>();
 		}
-		return null;
-	}
-	
-	public void attachLocalizedText(final String lang, final String text) {
-		final int length = _localisations.length;
-		final SMLocalisation[] localisations = Arrays.copyOf(_localisations, length + 1);
-		localisations[length] = new SMLocalisation(lang, text);
-		_localisations = localisations;
+		_localisations.put(lang, new Localization(lang, text));
 	}
 	
 	public void removeAllLocalisations() {
-		_localisations = EMPTY_SML_ARRAY;
+		_localisations = null;
 	}
 	
 	public SystemMessage getStaticSystemMessage() {
 		return _staticSystemMessage;
 	}
 	
-	public void setStaticSystemMessage(final SystemMessage sm) {
+	public void setStaticSystemMessage(SystemMessage sm) {
 		_staticSystemMessage = sm;
 	}
 	
 	@Override
 	public String toString() {
 		return "SM[" + getId() + ":" + getName() + "]";
-	}
-	
-	public static final class SMLocalisation {
-		private final String _lang;
-		private final Builder _builder;
-		
-		public SMLocalisation(final String lang, final String text) {
-			_lang = lang;
-			_builder = Builder.newBuilder(text);
-		}
-		
-		public String getLanguage() {
-			return _lang;
-		}
-		
-		public final String getLocalisation(final Object... params) {
-			return _builder.toString(params);
-		}
 	}
 }
