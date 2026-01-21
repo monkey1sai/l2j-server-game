@@ -860,7 +860,7 @@ public class L2CharacterAI extends AbstractAI {
 	
 	@Override
 	protected void onEvtAfraid(L2Character effector, boolean start) {
-		double radians = Math.toRadians(start ? Util.calculateAngleFrom(effector, _actor) : Util.convertHeadingToDegree(_actor.getHeading()));
+		double radians = Math.toRadians(Util.calculateAngleFrom(effector, _actor));
 		
 		int posX = (int) (_actor.getX() + (FEAR_RANGE * Math.cos(radians)));
 		int posY = (int) (_actor.getY() + (FEAR_RANGE * Math.sin(radians)));

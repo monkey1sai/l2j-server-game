@@ -362,7 +362,14 @@ public class L2AttackableAI extends L2CharacterAI {
 				_fearTask.cancel(true);
 				_fearTask = null;
 				_actor.stopAbnormalVisualEffect(true, AbnormalVisualEffect.TURN_FLEE);
-				setIntention(AI_INTENTION_IDLE);
+				
+				final L2Character mostHated = getActor().getMostHated();
+				if (mostHated != null) {
+					setIntention(AI_INTENTION_ATTACK, mostHated);
+				} else {
+					setIntention(AI_INTENTION_ACTIVE);
+				}
+				onEvtThink();
 			}
 		}
 	}
@@ -1813,7 +1820,7 @@ public class L2AttackableAI extends L2CharacterAI {
 	@Override
 	protected void onEvtThink() {
 		// Check if the actor can't use skills and if a thinking action isn't already in progress
-		if (_thinking || getActor().isAllSkillsDisabled()) {
+		if (_thinking || getActor().isAllSkillsDisabled() || (_fearTime > 0)) {
 			return;
 		}
 		
@@ -1869,10 +1876,12 @@ public class L2AttackableAI extends L2CharacterAI {
 		}
 		
 		// Set the Intention to AI_INTENTION_ATTACK
-		if (getIntention() != AI_INTENTION_ATTACK) {
-			setIntention(AI_INTENTION_ATTACK, attacker);
-		} else if (actor.getMostHated() != getAttackTarget()) {
-			setIntention(AI_INTENTION_ATTACK, attacker);
+		if (_fearTime <= 0) {
+			if (getIntention() != AI_INTENTION_ATTACK) {
+				setIntention(AI_INTENTION_ATTACK, attacker);
+			} else if (actor.getMostHated() != getAttackTarget()) {
+				setIntention(AI_INTENTION_ATTACK, attacker);
+			}
 		}
 		
 		if (actor instanceof L2MonsterInstance master) {
@@ -1910,7 +1919,7 @@ public class L2AttackableAI extends L2CharacterAI {
 			actor.addDamageHate(target, 0, aggro);
 			
 			// Set the actor AI Intention to AI_INTENTION_ATTACK
-			if (getIntention() != AI_INTENTION_ATTACK) {
+			if ((_fearTime <= 0) && (getIntention() != AI_INTENTION_ATTACK)) {
 				// Set the L2Character movement type to run and send Server->Client packet ChangeMoveType to all others L2PcInstance
 				if (!actor.isRunning()) {
 					actor.setRunning();
