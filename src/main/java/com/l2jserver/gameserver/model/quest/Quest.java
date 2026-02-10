@@ -946,13 +946,13 @@ public class Quest extends AbstractScript implements IIdentifiable {
 			try (var rs = ps1.executeQuery()) {
 				while (rs.next()) {
 					// Get the ID of the quest and its state
-					String questId = rs.getString("name");
-					String statename = rs.getString("value");
+					final var questId = rs.getString("name");
+					final var statename = rs.getString("value");
 					
 					// Search quest associated with the ID
-					Quest q = QuestManager.getInstance().getQuest(questId);
+					final var q = QuestManager.getInstance().getQuest(questId);
 					if (q == null) {
-						LOG.warn("Unknown quest {} for player {}!", questId, player.getName());
+						LOG.warn("Unknown quest {} for player {}!", questId, player);
 						if (general().autoDeleteInvalidQuestData()) {
 							invalidQuestData.setInt(1, player.getObjectId());
 							invalidQuestData.setString(2, questId);
@@ -972,12 +972,16 @@ public class Quest extends AbstractScript implements IIdentifiable {
 				ps2.setString(2, "<state>");
 				try (var rs = ps2.executeQuery()) {
 					while (rs.next()) {
-						String questId = rs.getString("name");
-						String var = rs.getString("var");
-						String value = rs.getString("value");
+						final var questId = rs.getString("name");
+						final var var = rs.getString("var");
+						final var value = rs.getString("value");
 						// Get the QuestState saved in the loop before
-						Quest q = QuestManager.getInstance().getQuest(questId);
-						QuestState qs = q.getQuestState(player, true);
+						final var q = QuestManager.getInstance().getQuest(questId);
+						if (q == null) {
+							continue;
+						}
+						
+						final var qs = q.getQuestState(player, true);
 						if (qs == null) {
 							LOG.warn("Lost variable {} in quest {} for player {}!", var, questId, player.getName());
 							if (general().autoDeleteInvalidQuestData()) {
