@@ -24,7 +24,7 @@ import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
  * Recipe Book DAO interface.
  * @author Zoey76
  */
-public interface RecipeBookDAO {
+public interface RecipeBookDAO extends DAO {
 	void insert(L2PcInstance player, int recipeId, boolean isDwarf);
 	
 	/**

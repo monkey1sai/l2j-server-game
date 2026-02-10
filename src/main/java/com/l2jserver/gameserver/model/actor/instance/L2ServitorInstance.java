@@ -23,7 +23,7 @@ import static com.l2jserver.gameserver.config.Configuration.character;
 import java.util.concurrent.Future;
 
 import com.l2jserver.gameserver.ThreadPoolManager;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.data.sql.impl.CharSummonTable;
 import com.l2jserver.gameserver.data.sql.impl.SummonEffectsTable;
 import com.l2jserver.gameserver.enums.InstanceType;

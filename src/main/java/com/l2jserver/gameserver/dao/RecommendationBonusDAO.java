@@ -24,7 +24,7 @@ import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
  * Recommendation Bonus DAO interface.
  * @author Zoey76
  */
-public interface RecommendationBonusDAO {
+public interface RecommendationBonusDAO extends DAO {
 	void load(L2PcInstance player);
 	
 	void insert(L2PcInstance player, int recomTime);

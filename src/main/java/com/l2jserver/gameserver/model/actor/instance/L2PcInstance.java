@@ -82,7 +82,7 @@ import com.l2jserver.gameserver.ai.L2SummonAI;
 import com.l2jserver.gameserver.bbs.model.Forum;
 import com.l2jserver.gameserver.bbs.service.ForumsBBSManager;
 import com.l2jserver.gameserver.cache.WarehouseCacheManager;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.data.sql.impl.CharNameTable;
 import com.l2jserver.gameserver.data.sql.impl.CharSummonTable;
 import com.l2jserver.gameserver.data.xml.impl.AdminData;

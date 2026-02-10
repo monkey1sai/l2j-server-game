@@ -27,7 +27,7 @@ import com.l2jserver.gameserver.model.items.instance.L2ItemInstance;
  * Pet DAO interface.
  * @author Zoey76
  */
-public interface PetDAO {
+public interface PetDAO extends DAO {
 	void updateFood(L2PcInstance player, int petId);
 	
 	/**

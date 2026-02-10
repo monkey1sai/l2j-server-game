@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.l2jserver.gameserver.bbs.model.Forum;
 import com.l2jserver.gameserver.bbs.model.ForumType;
 import com.l2jserver.gameserver.bbs.model.ForumVisibility;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.model.L2Clan;
 
 /**
@@ -53,7 +53,7 @@ public class ForumsBBSManager {
 	}
 	
 	public void load() {
-		FORUMS_BY_NAME.putAll(DAOFactory.getInstance().getForumRepository().getForums());
+		FORUMS_BY_NAME.putAll(DAOFactory.getInstance().getForumDAO().getForums());
 		FORUMS_BY_ID.putAll(FORUMS_BY_NAME.values().stream().collect(Collectors.toMap(Forum::getId, f -> f)));
 		LOG.info("Loaded {} forums.", FORUMS_BY_NAME.size());
 	}
@@ -70,7 +70,7 @@ public class ForumsBBSManager {
 		final var forum = new Forum(0, name, parent, type, visibility, ownerId);
 		parent.addChild(forum);
 		
-		DAOFactory.getInstance().getForumRepository().save(forum);
+		DAOFactory.getInstance().getForumDAO().save(forum);
 		
 		FORUMS_BY_NAME.put(forum.getName(), forum);
 		FORUMS_BY_ID.put(forum.getId(), forum);

@@ -24,7 +24,7 @@ import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
  * Item DAO interface.
  * @author Zoey76
  */
-public interface ItemDAO {
+public interface ItemDAO extends DAO {
 	/**
 	 * Loads pet's inventory from database.
 	 * @param player the player

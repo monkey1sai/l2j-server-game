@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.l2jserver.commons.database.ConnectionFactory;
 import com.l2jserver.gameserver.bbs.service.ForumsBBSManager;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.data.sql.impl.CharNameTable;
 import com.l2jserver.gameserver.data.sql.impl.ClanTable;
 import com.l2jserver.gameserver.data.sql.impl.CrestTable;

@@ -45,7 +45,7 @@ import com.l2jserver.commons.util.IPv4Filter;
 import com.l2jserver.commons.util.Util;
 import com.l2jserver.gameserver.bbs.service.ForumsBBSManager;
 import com.l2jserver.gameserver.cache.HtmCache;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.data.json.ExperienceData;
 import com.l2jserver.gameserver.data.sql.impl.AnnouncementsTable;
 import com.l2jserver.gameserver.data.sql.impl.CharNameTable;

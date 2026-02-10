@@ -24,7 +24,7 @@ import com.l2jserver.gameserver.model.actor.instance.L2PetInstance;
  * Pet Skill Save interface.
  * @author Zoey76
  */
-public interface PetSkillSaveDAO {
+public interface PetSkillSaveDAO extends DAO {
 	/**
 	 * Stores the pet skills in the database.
 	 * @param pet the pets

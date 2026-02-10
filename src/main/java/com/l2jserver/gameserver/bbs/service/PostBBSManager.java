@@ -30,7 +30,7 @@ import com.l2jserver.gameserver.bbs.model.Forum;
 import com.l2jserver.gameserver.bbs.model.ForumType;
 import com.l2jserver.gameserver.bbs.model.Post;
 import com.l2jserver.gameserver.bbs.model.Topic;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.handler.CommunityBoardHandler;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
 import com.l2jserver.gameserver.util.StringUtil;
@@ -51,7 +51,7 @@ public class PostBBSManager extends BaseBBSManager {
 	public List<Post> getGPostByTopic(Topic topic) {
 		var posts = _postByTopic.get(topic);
 		if (posts == null) {
-			posts = DAOFactory.getInstance().getPostRepository().load(topic);
+			posts = DAOFactory.getInstance().getPostDAO().load(topic);
 			_postByTopic.put(topic, posts);
 		}
 		return posts;
@@ -168,7 +168,7 @@ public class PostBBSManager extends BaseBBSManager {
 						CommunityBoardHandler.separateAndSend("<html><body><br><br><center>the post: " + idp + " does not exist !</center><br><br></body></html>", activeChar);
 					} else {
 						post.setTxt(ar4);
-						DAOFactory.getInstance().getPostRepository().update(post);
+						DAOFactory.getInstance().getPostDAO().update(post);
 						parsecmd("_bbsposts;read;" + f.getId() + ";" + t.getId(), activeChar);
 					}
 				}

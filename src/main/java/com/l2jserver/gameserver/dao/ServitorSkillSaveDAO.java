@@ -24,7 +24,7 @@ import com.l2jserver.gameserver.model.actor.instance.L2ServitorInstance;
  * Servitor Skill Save DAO interface.
  * @author Zoey76
  */
-public interface ServitorSkillSaveDAO {
+public interface ServitorSkillSaveDAO extends DAO {
 	/**
 	 * Stores the servitor skills in the database.
 	 * @param servitor the servitor

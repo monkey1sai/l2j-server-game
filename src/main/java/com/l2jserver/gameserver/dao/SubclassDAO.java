@@ -25,7 +25,7 @@ import com.l2jserver.gameserver.model.base.SubClass;
  * Subclass DAO interface.
  * @author Zoey76
  */
-public interface SubclassDAO {
+public interface SubclassDAO extends DAO {
 	void update(L2PcInstance player);
 	
 	/**

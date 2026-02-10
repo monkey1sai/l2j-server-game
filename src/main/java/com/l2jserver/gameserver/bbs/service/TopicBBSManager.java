@@ -33,7 +33,7 @@ import com.l2jserver.gameserver.bbs.model.ForumType;
 import com.l2jserver.gameserver.bbs.model.Post;
 import com.l2jserver.gameserver.bbs.model.Topic;
 import com.l2jserver.gameserver.bbs.model.TopicType;
-import com.l2jserver.gameserver.dao.factory.impl.DAOFactory;
+import com.l2jserver.gameserver.dao.factory.DAOFactory;
 import com.l2jserver.gameserver.data.sql.impl.ClanTable;
 import com.l2jserver.gameserver.handler.CommunityBoardHandler;
 import com.l2jserver.gameserver.model.actor.instance.L2PcInstance;
@@ -98,7 +98,7 @@ public class TopicBBSManager extends BaseBBSManager {
 			
 			TopicBBSManager.getInstance().addTopic(topic);
 			
-			DAOFactory.getInstance().getTopicRepository().save(topic);
+			DAOFactory.getInstance().getTopicDAO().save(topic);
 			
 			forum.addTopic(topic);
 			TopicBBSManager.getInstance().setMaxId(topic.getId(), forum);
@@ -123,10 +123,10 @@ public class TopicBBSManager extends BaseBBSManager {
 			final var posts = PostBBSManager.getInstance().getGPostByTopic(topic);
 			if (!posts.isEmpty()) {
 				PostBBSManager.getInstance().delPostByTopic(topic);
-				DAOFactory.getInstance().getPostRepository().delete(topic);
+				DAOFactory.getInstance().getPostDAO().delete(topic);
 			}
 			
-			DAOFactory.getInstance().getTopicRepository().delete(topic, forum);
+			DAOFactory.getInstance().getTopicDAO().delete(topic, forum);
 			
 			parsecmd("_bbsmemo", activeChar);
 		} else {
@@ -177,10 +177,10 @@ public class TopicBBSManager extends BaseBBSManager {
 					final var p = PostBBSManager.getInstance().getGPostByTopic(t);
 					if (p != null) {
 						PostBBSManager.getInstance().delPostByTopic(t);
-						DAOFactory.getInstance().getPostRepository().delete(t);
+						DAOFactory.getInstance().getPostDAO().delete(t);
 					}
 					
-					DAOFactory.getInstance().getTopicRepository().delete(t, f);
+					DAOFactory.getInstance().getTopicDAO().delete(t, f);
 					
 					parsecmd("_bbsmemo", activeChar);
 				}

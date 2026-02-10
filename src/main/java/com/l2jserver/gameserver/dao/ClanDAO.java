@@ -24,7 +24,7 @@ import java.util.Map;
  * Clan DAO interface.
  * @author Zoey76
  */
-public interface ClanDAO {
+public interface ClanDAO extends DAO {
 	
 	/**
 	 * Gets the clan privileges.

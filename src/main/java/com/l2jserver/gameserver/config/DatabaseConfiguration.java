@@ -27,6 +27,8 @@ import org.aeonbits.owner.Config.LoadPolicy;
 import org.aeonbits.owner.Config.Sources;
 import org.aeonbits.owner.Reloadable;
 
+import com.l2jserver.gameserver.dao.factory.DatabaseType;
+
 /**
  * Database Configuration.
  * @author Zoey76
@@ -40,6 +42,10 @@ import org.aeonbits.owner.Reloadable;
 @LoadPolicy(MERGE)
 @HotReload(value = 20, unit = MINUTES, type = ASYNC)
 public interface DatabaseConfiguration extends Reloadable {
+	
+	@Key("DatabaseType")
+	@DefaultValue("MYSQL")
+	DatabaseType getDatabaseType();
 	
 	@Key("URL")
 	String getURL();
