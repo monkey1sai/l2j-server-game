@@ -18,6 +18,8 @@
  */
 package com.l2jserver.gameserver.config;
 
+import static com.l2jserver.gameserver.GameServer.startTimedSection;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -30,15 +32,11 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 
-import com.l2jserver.gameserver.GameServer;
 import com.l2jserver.gameserver.util.IXmlReader;
 
 /**
@@ -62,7 +60,7 @@ public class IPConfigData implements IXmlReader {
 	
 	@Override
 	public void load() {
-		GameServer.startTimedSection("Network Configuration");
+		startTimedSection("Network Configuration");
 		final File f = new File(IP_CONFIG_FILE);
 		if (f.exists()) {
 			LOG.info("Using existing ipconfig.xml.");
@@ -75,12 +73,11 @@ public class IPConfigData implements IXmlReader {
 	
 	@Override
 	public void parseDocument(Document doc) {
-		NamedNodeMap attrs;
-		for (Node n = doc.getFirstChild(); n != null; n = n.getNextSibling()) {
+		for (var n = doc.getFirstChild(); n != null; n = n.getNextSibling()) {
 			if ("gameserver".equalsIgnoreCase(n.getNodeName())) {
-				for (Node d = n.getFirstChild(); d != null; d = d.getNextSibling()) {
+				for (var d = n.getFirstChild(); d != null; d = d.getNextSibling()) {
 					if ("define".equalsIgnoreCase(d.getNodeName())) {
-						attrs = d.getAttributes();
+						final var attrs = d.getAttributes();
 						_subnets.add(attrs.getNamedItem("subnet").getNodeValue());
 						_hosts.add(attrs.getNamedItem("address").getNodeValue());
 						
@@ -90,7 +87,7 @@ public class IPConfigData implements IXmlReader {
 					}
 				}
 				
-				Node att = n.getAttributes().getNamedItem("address");
+				final var att = n.getAttributes().getNamedItem("address");
 				if (att == null) {
 					LOG.warn("Failed to load {} file - default server address is missing.", IP_CONFIG_FILE);
 					_hosts.add("127.0.0.1");
@@ -133,7 +130,7 @@ public class IPConfigData implements IXmlReader {
 					
 					final String hostAddress = ia.getAddress().getHostAddress();
 					final int subnetPrefixLength = ia.getNetworkPrefixLength();
-					final int subnetMaskInt = IntStream.rangeClosed(1, subnetPrefixLength).reduce((r, e) -> (r << 1) + 1).orElse(0) << (32 - subnetPrefixLength);
+					final int subnetMaskInt = subnetPrefixLength == 0 ? 0 : -1 << (32 - subnetPrefixLength);
 					final int hostAddressInt = Arrays.stream(hostAddress.split("\\.")).mapToInt(Integer::parseInt).reduce((r, e) -> (r << 8) + e).orElse(0);
 					final int subnetAddressInt = hostAddressInt & subnetMaskInt;
 					final String subnetAddress = ((subnetAddressInt >> 24) & 0xFF) + "." + ((subnetAddressInt >> 16) & 0xFF) + "." + ((subnetAddressInt >> 8) & 0xFF) + "." + (subnetAddressInt & 0xFF);
