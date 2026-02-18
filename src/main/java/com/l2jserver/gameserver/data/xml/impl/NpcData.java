@@ -427,7 +427,7 @@ public class NpcData implements IXmlReader {
 								}
 								
 								for (AISkillScope aiSkillScope : aiSkillScopes) {
-									List<Skill> aiSkills = aiSkillLists.computeIfAbsent(aiSkillScope, k -> new ArrayList<>());
+									List<Skill> aiSkills = aiSkillLists.computeIfAbsent(aiSkillScope, _ -> new ArrayList<>());
 									aiSkills.add(skill);
 								}
 							}

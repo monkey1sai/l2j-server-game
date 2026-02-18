@@ -243,7 +243,7 @@ public abstract class AbstractScript implements INamable {
 						
 						for (int level = range.from(); level <= range.to(); level++) {
 							final List<L2NpcTemplate> templates = NpcData.getInstance().getAllOfLevel(level);
-							templates.forEach(template -> ids.add(template.getId()));
+							templates.forEach(t -> ids.add(t.getId()));
 						}
 					} else if (annotation instanceof NpcLevelRanges ranges) {
 						for (NpcLevelRange range : ranges.value()) {
@@ -257,7 +257,7 @@ public abstract class AbstractScript implements INamable {
 							
 							for (int level = range.from(); level <= range.to(); level++) {
 								final List<L2NpcTemplate> templates = NpcData.getInstance().getAllOfLevel(level);
-								templates.forEach(template -> ids.add(template.getId()));
+								templates.forEach(t -> ids.add(t.getId()));
 							}
 						}
 					} else if (annotation instanceof Priority p) {
@@ -1879,7 +1879,7 @@ public abstract class AbstractScript implements INamable {
 	 * @return the counts of each items given to each player
 	 */
 	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, Collection<ItemHolder> items, long limit, boolean playSound) {
-		return distributeItems(players, items, t -> limit, playSound);
+		return distributeItems(players, items, _ -> limit, playSound);
 	}
 	
 	/**
@@ -2007,7 +2007,7 @@ public abstract class AbstractScript implements INamable {
 	 * @return the counts of each items given to each player
 	 */
 	protected static Map<L2PcInstance, Map<Integer, Long>> distributeItems(Collection<L2PcInstance> players, final GroupedGeneralDropItem items, L2Character killer, L2Character victim, long limit, boolean playSound, boolean smartDrop) {
-		return distributeItems(players, items, killer, victim, t -> limit, playSound, smartDrop);
+		return distributeItems(players, items, killer, victim, _ -> limit, playSound, smartDrop);
 	}
 	
 	/**

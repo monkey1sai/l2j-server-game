@@ -49,7 +49,7 @@ public class SummonSkillsTable {
 			var rs = s.executeQuery("SELECT templateId, minLvl, skillId, skillLvl FROM pets_skills")) {
 			while (rs.next()) {
 				final int npcId = rs.getInt("templateId");
-				final var skillTree = _skillTrees.computeIfAbsent(npcId, k -> new HashMap<>());
+				final var skillTree = _skillTrees.computeIfAbsent(npcId, _ -> new HashMap<>());
 				
 				int id = rs.getInt("skillId");
 				int lvl = rs.getInt("skillLvl");

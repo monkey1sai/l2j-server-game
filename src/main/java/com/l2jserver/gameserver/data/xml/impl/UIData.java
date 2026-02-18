@@ -114,7 +114,7 @@ public class UIData implements IXmlReader {
 	 * @param cmd the command
 	 */
 	public static void addCategory(Map<Integer, List<Integer>> map, int cat, int cmd) {
-		map.computeIfAbsent(cat, k -> new ArrayList<>()).add(cmd);
+		map.computeIfAbsent(cat, _ -> new ArrayList<>()).add(cmd);
 	}
 	
 	/**
@@ -124,7 +124,7 @@ public class UIData implements IXmlReader {
 	 * @param akey the action key
 	 */
 	public static void addKey(Map<Integer, List<ActionKey>> map, int cat, ActionKey akey) {
-		map.computeIfAbsent(cat, k -> new ArrayList<>()).add(akey);
+		map.computeIfAbsent(cat, _ -> new ArrayList<>()).add(akey);
 	}
 	
 	/**

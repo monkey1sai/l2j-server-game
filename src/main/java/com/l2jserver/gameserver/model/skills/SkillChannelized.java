@@ -31,7 +31,7 @@ public final class SkillChannelized {
 	private final Map<Integer, Map<Integer, L2Character>> _channelizers = new ConcurrentHashMap<>();
 	
 	public void addChannelizer(int skillId, L2Character channelizer) {
-		_channelizers.computeIfAbsent(skillId, k -> new ConcurrentHashMap<>()).put(channelizer.getObjectId(), channelizer);
+		_channelizers.computeIfAbsent(skillId, _ -> new ConcurrentHashMap<>()).put(channelizer.getObjectId(), channelizer);
 	}
 	
 	public void removeChannelizer(int skillId, L2Character channelizer) {

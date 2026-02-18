@@ -1175,7 +1175,7 @@ public final class Skill implements IIdentifiable {
 	 * @param effect the effect to add
 	 */
 	public void addEffect(EffectScope effectScope, AbstractEffect effect) {
-		final var effects = _effectLists.computeIfAbsent(effectScope, k -> new ArrayList<>(1));
+		final var effects = _effectLists.computeIfAbsent(effectScope, _ -> new ArrayList<>(1));
 		effects.add(effect);
 	}
 	

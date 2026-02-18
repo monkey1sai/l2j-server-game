@@ -103,7 +103,7 @@ public final class ScriptEngineManager {
 			}
 		}
 		
-		compiler.compileAll().forEach((k, v) -> runMain(v));
+		compiler.compileAll().forEach((_, v) -> runMain(v));
 	}
 	
 	private void executeAllScriptsInDirectory(InMemoryJavaCompiler compiler, File dir, boolean recurseDown) {
@@ -140,7 +140,7 @@ public final class ScriptEngineManager {
 	}
 	
 	public void executeScript(File file) {
-		final Class<?> clazz = compileScript(file);
+		final var clazz = compileScript(file);
 		runMain(clazz);
 	}
 	
@@ -163,8 +163,8 @@ public final class ScriptEngineManager {
 	}
 	
 	private static String getClassForFile(File script) {
-		final String path = script.getAbsolutePath();
-		final String scpPath = server().getScriptRoot().getAbsolutePath();
+		final var path = script.getAbsolutePath();
+		final var scpPath = server().getScriptRoot().getAbsolutePath();
 		if (path.startsWith(scpPath)) {
 			final int idx = path.lastIndexOf('.');
 			return path.substring(scpPath.length() + 1, idx).replace('/', '.').replace('\\', '.');

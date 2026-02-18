@@ -21,7 +21,6 @@ package com.l2jserver.gameserver.instancemanager;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,15 +51,10 @@ public class RaidBossPointsManager {
 			var s = con.createStatement();
 			var rs = s.executeQuery("SELECT `charId`,`boss_id`,`points` FROM `character_raid_points`")) {
 			while (rs.next()) {
-				int charId = rs.getInt("charId");
-				int bossId = rs.getInt("boss_id");
-				int points = rs.getInt("points");
-				Map<Integer, Integer> values = _list.get(charId);
-				if (values == null) {
-					values = new HashMap<>();
-				}
-				values.put(bossId, points);
-				_list.put(charId, values);
+				final var charId = rs.getInt("charId");
+				final var bossId = rs.getInt("boss_id");
+				final var points = rs.getInt("points");
+				_list.computeIfAbsent(charId, _ -> new ConcurrentHashMap<>()).put(bossId, points);
 			}
 			LOG.info("Loaded {} characters raid points.", _list.size());
 		} catch (Exception ex) {
@@ -81,13 +75,13 @@ public class RaidBossPointsManager {
 	}
 	
 	public final void addPoints(L2PcInstance player, int bossId, int points) {
-		final Map<Integer, Integer> tmpPoint = _list.computeIfAbsent(player.getObjectId(), k -> new HashMap<>());
+		final var tmpPoint = _list.computeIfAbsent(player.getObjectId(), _ -> new ConcurrentHashMap<>());
 		updatePointsInDB(player, bossId, tmpPoint.merge(bossId, points, Integer::sum));
 	}
 	
 	public final int getPointsByOwnerId(int ownerId) {
-		Map<Integer, Integer> tmpPoint = _list.get(ownerId);
-		int totalPoints = 0;
+		final var tmpPoint = _list.get(ownerId);
+		var totalPoints = 0;
 		
 		if ((tmpPoint == null) || tmpPoint.isEmpty()) {
 			return 0;
@@ -114,7 +108,7 @@ public class RaidBossPointsManager {
 	}
 	
 	public final int calculateRanking(int playerObjId) {
-		Map<Integer, Integer> rank = getRankList();
+		final var rank = getRankList();
 		if (rank.containsKey(playerObjId)) {
 			return rank.get(playerObjId);
 		}
@@ -122,19 +116,19 @@ public class RaidBossPointsManager {
 	}
 	
 	public Map<Integer, Integer> getRankList() {
-		final Map<Integer, Integer> tmpPoints = new HashMap<>();
-		for (int ownerId : _list.keySet()) {
-			int totalPoints = getPointsByOwnerId(ownerId);
+		final var tmpPoints = new HashMap<Integer, Integer>();
+		for (var ownerId : _list.keySet()) {
+			final var totalPoints = getPointsByOwnerId(ownerId);
 			if (totalPoints != 0) {
 				tmpPoints.put(ownerId, totalPoints);
 			}
 		}
 		
-		final List<Entry<Integer, Integer>> list = new ArrayList<>(tmpPoints.entrySet());
+		final var list = new ArrayList<>(tmpPoints.entrySet());
 		list.sort(Comparator.comparing(Entry<Integer, Integer>::getValue).reversed());
-		int ranking = 1;
-		final Map<Integer, Integer> tmpRanking = new HashMap<>();
-		for (Entry<Integer, Integer> entry : list) {
+		var ranking = 1;
+		final var tmpRanking = new HashMap<Integer, Integer>();
+		for (var entry : list) {
 			tmpRanking.put(entry.getKey(), ranking++);
 		}
 		return tmpRanking;

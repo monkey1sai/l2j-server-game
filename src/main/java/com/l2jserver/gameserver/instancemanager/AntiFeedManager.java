@@ -64,7 +64,7 @@ public final class AntiFeedManager {
 			return false;
 		}
 		
-		final L2PcInstance targetPlayer = target.getActingPlayer();
+		final var targetPlayer = target.getActingPlayer();
 		if (targetPlayer == null) {
 			return false;
 		}
@@ -76,13 +76,13 @@ public final class AntiFeedManager {
 		}
 		
 		if (customs().antiFeedDualbox() && (attacker != null)) {
-			final L2PcInstance attackerPlayer = attacker.getActingPlayer();
+			final var attackerPlayer = attacker.getActingPlayer();
 			if (attackerPlayer == null) {
 				return false;
 			}
 			
-			final L2GameClient targetClient = targetPlayer.getClient();
-			final L2GameClient attackerClient = attackerPlayer.getClient();
+			final var targetClient = targetPlayer.getClient();
+			final var attackerClient = attackerPlayer.getClient();
 			if ((targetClient == null) || (attackerClient == null) || targetClient.isDetached() || attackerClient.isDetached()) {
 				// unable to check ip address
 				return !customs().antiFeedDisconnectedAsDualbox();
@@ -132,19 +132,21 @@ public final class AntiFeedManager {
 			return false; // unable to determine IP address
 		}
 		
-		final Map<Integer, AtomicInteger> event = _eventIPs.get(eventId);
+		final var event = _eventIPs.get(eventId);
 		if (event == null) {
 			return false; // no such event registered
 		}
 		
-		final Integer addrHash = client.getConnectionAddress().hashCode();
-		final AtomicInteger connectionCount = event.computeIfAbsent(addrHash, k -> new AtomicInteger());
-		int whiteListCount = customs().getDualboxCheckWhitelist().getOrDefault(addrHash, 0);
-		if ((whiteListCount < 0) || ((connectionCount.get() + 1) <= (max + whiteListCount))) {
+		final var addrHash = client.getConnectionAddress().hashCode();
+		final var connectionCount = event.computeIfAbsent(addrHash, _ -> new AtomicInteger());
+		final int whiteListCount = customs().getDualboxCheckWhitelist().getOrDefault(addrHash, 0);
+		if (whiteListCount < 0) {
 			connectionCount.incrementAndGet();
 			return true;
 		}
-		return false;
+		
+		final var limit = max + whiteListCount;
+		return connectionCount.getAndUpdate(current -> current < limit ? current + 1 : current) < limit;
 	}
 	
 	/**
@@ -168,14 +170,14 @@ public final class AntiFeedManager {
 			return false; // unable to determine IP address
 		}
 		
-		final Map<Integer, AtomicInteger> event = _eventIPs.get(eventId);
+		final var event = _eventIPs.get(eventId);
 		if (event == null) {
 			return false; // no such event registered
 		}
 		
-		final Integer addrHash = client.getConnectionAddress().hashCode();
+		final var addrHash = client.getConnectionAddress().hashCode();
 		
-		return event.computeIfPresent(addrHash, (k, v) -> {
+		return event.computeIfPresent(addrHash, (_, v) -> {
 			if (v.decrementAndGet() == 0) {
 				return null;
 			}
@@ -192,7 +194,7 @@ public final class AntiFeedManager {
 			return;
 		}
 		
-		_eventIPs.forEach((k, v) -> removeClient(k, client));
+		_eventIPs.forEach((k, _) -> removeClient(k, client));
 	}
 	
 	/**
@@ -225,7 +227,7 @@ public final class AntiFeedManager {
 			return max;
 		}
 		
-		final Integer addrHash = client.getConnectionAddress().hashCode();
+		final var addrHash = client.getConnectionAddress().hashCode();
 		int limit = max;
 		if (customs().getDualboxCheckWhitelist().containsKey(addrHash)) {
 			limit += customs().getDualboxCheckWhitelist().get(addrHash);

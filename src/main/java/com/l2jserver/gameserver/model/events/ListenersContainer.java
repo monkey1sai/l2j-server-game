@@ -39,10 +39,10 @@ public class ListenersContainer {
 	 * @return
 	 */
 	public AbstractEventListener addListener(AbstractEventListener listener) {
-		if ((listener == null)) {
+		if (listener == null) {
 			throw new NullPointerException("Listener cannot be null!");
 		}
-		getListeners().computeIfAbsent(listener.getType(), k -> new PriorityBlockingQueue<>()).add(listener);
+		getListeners().computeIfAbsent(listener.getType(), _ -> new PriorityBlockingQueue<>()).add(listener);
 		return listener;
 	}
 	
@@ -52,15 +52,21 @@ public class ListenersContainer {
 	 * @return
 	 */
 	public AbstractEventListener removeListener(AbstractEventListener listener) {
-		if ((listener == null)) {
+		if (listener == null) {
 			throw new NullPointerException("Listener cannot be null!");
-		} else if (_listeners == null) {
+		}
+		
+		final var listeners = _listeners;
+		if (listeners == null) {
 			throw new NullPointerException("Listeners container is not initialized!");
-		} else if (!_listeners.containsKey(listener.getType())) {
+		}
+		
+		final var queue = listeners.get(listener.getType());
+		if (queue == null) {
 			throw new IllegalAccessError("Listeners container doesn't had " + listener.getType() + " event type added!");
 		}
 		
-		_listeners.get(listener.getType()).remove(listener);
+		queue.remove(listener);
 		return listener;
 	}
 	
@@ -69,7 +75,8 @@ public class ListenersContainer {
 	 * @return {@code List} of {@link AbstractEventListener} by the specified type
 	 */
 	public Queue<AbstractEventListener> getListeners(EventType type) {
-		return (_listeners != null) && _listeners.containsKey(type) ? _listeners.get(type) : EmptyQueue.emptyQueue();
+		final var listeners = _listeners;
+		return (listeners != null) ? listeners.getOrDefault(type, EmptyQueue.emptyQueue()) : EmptyQueue.emptyQueue();
 	}
 	
 	public void removeListenerIf(EventType type, Predicate<? super AbstractEventListener> filter) {
@@ -77,8 +84,9 @@ public class ListenersContainer {
 	}
 	
 	public void removeListenerIf(Predicate<? super AbstractEventListener> filter) {
-		if (_listeners != null) {
-			getListeners().values().forEach(queue -> queue.stream().filter(filter).forEach(AbstractEventListener::unregisterMe));
+		final var listeners = _listeners;
+		if (listeners != null) {
+			listeners.values().forEach(queue -> queue.stream().filter(filter).forEach(AbstractEventListener::unregisterMe));
 		}
 	}
 	
@@ -91,13 +99,15 @@ public class ListenersContainer {
 	 * @return the listeners container map.
 	 */
 	private Map<EventType, Queue<AbstractEventListener>> getListeners() {
-		if (_listeners == null) {
+		var listeners = _listeners;
+		if (listeners == null) {
 			synchronized (this) {
-				if (_listeners == null) {
-					_listeners = new ConcurrentHashMap<>();
+				listeners = _listeners;
+				if (listeners == null) {
+					_listeners = listeners = new ConcurrentHashMap<>();
 				}
 			}
 		}
-		return _listeners;
+		return listeners;
 	}
 }

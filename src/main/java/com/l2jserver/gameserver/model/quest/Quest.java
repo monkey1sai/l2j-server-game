@@ -58,7 +58,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -300,14 +299,16 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	 * @return the quest timers
 	 */
 	public final Map<String, List<QuestTimer>> getQuestTimers() {
-		if (_questTimers == null) {
+		var questTimers = _questTimers;
+		if (questTimers == null) {
 			synchronized (this) {
-				if (_questTimers == null) {
-					_questTimers = new ConcurrentHashMap<>(1);
+				questTimers = _questTimers;
+				if (questTimers == null) {
+					_questTimers = questTimers = new ConcurrentHashMap<>(1);
 				}
 			}
 		}
-		return _questTimers;
+		return questTimers;
 	}
 	
 	/**
@@ -320,7 +321,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	 *            If {@code true}, the task is repeated every {@code time} milliseconds until explicitly stopped.
 	 */
 	public void startQuestTimer(String name, long time, L2Npc npc, L2PcInstance player, boolean repeating) {
-		final List<QuestTimer> timers = getQuestTimers().computeIfAbsent(name, k -> new ArrayList<>(1));
+		final List<QuestTimer> timers = getQuestTimers().computeIfAbsent(name, _ -> new ArrayList<>(1));
 		// if there exists a timer with this name, allow the timer only if the [npc, player] set is unique
 		// nulls act as wildcards
 		if (getQuestTimer(name, npc, player) == null) {
@@ -2122,10 +2123,10 @@ public class Quest extends AbstractScript implements IIdentifiable {
 		// if timers ought to be restarted, the quest can take care of it
 		// with its code (example: save global data indicating what timer must be restarted).
 		if (_questTimers != null) {
-			for (List<QuestTimer> timers : getQuestTimers().values()) {
+			for (var timers : getQuestTimers().values()) {
 				_readLock.lock();
 				try {
-					for (QuestTimer timer : timers) {
+					for (var timer : timers) {
 						timer.cancel();
 					}
 				} finally {
@@ -2168,14 +2169,16 @@ public class Quest extends AbstractScript implements IIdentifiable {
 	 * @return the start conditions
 	 */
 	private Map<Predicate<L2PcInstance>, String> getStartConditions() {
-		if (_startCondition == null) {
+		var startCondition = _startCondition;
+		if (startCondition == null) {
 			synchronized (this) {
-				if (_startCondition == null) {
-					_startCondition = new LinkedHashMap<>(1);
+				startCondition = _startCondition;
+				if (startCondition == null) {
+					_startCondition = startCondition = new LinkedHashMap<>(1);
 				}
 			}
 		}
-		return _startCondition;
+		return startCondition;
 	}
 	
 	/**
@@ -2188,7 +2191,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 			return true;
 		}
 		
-		for (Predicate<L2PcInstance> cond : _startCondition.keySet()) {
+		for (var cond : _startCondition.keySet()) {
 			if (!cond.test(player)) {
 				return false;
 			}
@@ -2206,7 +2209,7 @@ public class Quest extends AbstractScript implements IIdentifiable {
 			return null;
 		}
 		
-		for (Entry<Predicate<L2PcInstance>, String> startRequirement : _startCondition.entrySet()) {
+		for (var startRequirement : _startCondition.entrySet()) {
 			if (!startRequirement.getKey().test(player)) {
 				return startRequirement.getValue();
 			}

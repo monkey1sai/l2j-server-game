@@ -394,7 +394,7 @@ public final class SpawnTable implements IXmlReader {
 	 * @param spawn the NPC spawn to add
 	 */
 	private void addSpawn(L2Spawn spawn) {
-		_spawnTable.computeIfAbsent(spawn.getId(), k -> ConcurrentHashMap.newKeySet(1)).add(spawn);
+		_spawnTable.computeIfAbsent(spawn.getId(), _ -> ConcurrentHashMap.newKeySet(1)).add(spawn);
 	}
 	
 	/**

@@ -589,7 +589,7 @@ public class L2Party extends AbstractPlayerGroup {
 	 * @param target the target who drop / pick the adena
 	 */
 	public void distributeItemEvenly(L2PcInstance player, int itemId, long itemAmount, L2Character target) {
-		var toReward = new HashMap<L2PcInstance, Long>(9);
+		final var toReward = new HashMap<L2PcInstance, Long>(9);
 		
 		for (var member : getMembers()) {
 			if (Util.checkIfInRange(character().getPartyRange2(), target, member, true)) {
@@ -608,12 +608,10 @@ public class L2Party extends AbstractPlayerGroup {
 			}
 			
 			if (leftOver > 0) {
-				var keys = new ArrayList<>(toReward.keySet());
-				
+				final var keys = new ArrayList<>(toReward.keySet());
 				while (leftOver-- > 0) {
-					int rndIndex = Rnd.get(0, toReward.size() - 1);
-					var rndMember = keys.get(rndIndex);
-					toReward.compute(rndMember, (m, n) -> n + 1);
+					final var rndMember = keys.get(Rnd.get(keys.size()));
+					toReward.compute(rndMember, (_, v) -> v + 1);
 				}
 			}
 			

@@ -236,12 +236,12 @@ public final class FourSepulchersManager {
 	}
 	
 	public void clean() {
-		for (int i = 31921; i < 31925; i++) {
+		for (var i = 31921; i < 31925; i++) {
 			if (!_startHallSpawns.containsKey(i)) {
 				LOG.warn("NPC Id {} is not inside {}!", i, _startHallSpawns);
 				continue;
 			}
-			int[] location = _startHallSpawns.get(i);
+			final var location = _startHallSpawns.get(i);
 			GrandBossManager.getInstance().getZone(location[0], location[1], location[2]).oustAllPlayers();
 		}
 		
@@ -255,7 +255,7 @@ public final class FourSepulchersManager {
 		_hallInUse.put(31923, false);
 		_hallInUse.put(31924, false);
 		
-		_archonSpawned.replaceAll((i, v) -> false);
+		_archonSpawned.replaceAll((_, _) -> false);
 	}
 	
 	protected void spawnManagers() {

@@ -694,7 +694,7 @@ public final class TerritoryWarManager implements Siegable {
 					}
 					_registeredClans.get(castleId).add(ClanTable.getInstance().getClan(registeredId));
 				} else {
-					_registeredMercenaries.computeIfAbsent(castleId, key -> new CopyOnWriteArrayList<>());
+					_registeredMercenaries.computeIfAbsent(castleId, _ -> new CopyOnWriteArrayList<>());
 					_registeredMercenaries.get(castleId).add(registeredId);
 				}
 			}
