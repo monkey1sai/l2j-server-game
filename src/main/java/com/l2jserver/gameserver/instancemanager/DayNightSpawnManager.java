@@ -182,7 +182,12 @@ public final class DayNightSpawnManager {
 			}
 			case 1 -> {
 				if (!boss.isVisible()) {
+					boss.stopAllEffects();
+					boss.setIsDead(false);
+					boss.setDecayed(false);
+					boss.setCurrentHpMp(boss.getMaxHp(), boss.getMaxMp());
 					boss.spawnMe();
+					RaidBossSpawnManager.getInstance().notifySpawnNightBoss(boss);
 				}
 				LOG.info("Spawning Hellmann raidboss.");
 			}
