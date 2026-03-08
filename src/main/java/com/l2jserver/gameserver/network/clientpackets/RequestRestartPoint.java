@@ -129,8 +129,8 @@ public final class RequestRestartPoint extends L2GameClientPacket {
 				}
 				loc = MapRegionManager.getInstance().getTeleToLocation(activeChar, TeleportWhereType.CLANHALL);
 				
-				if ((ClanHallManager.getInstance().getClanHallByOwner(activeChar.getClan()) != null) && (ClanHallManager.getInstance().getClanHallByOwner(activeChar.getClan()).getFunction(ClanHall.FUNC_RESTORE_EXP) != null)) {
-					activeChar.restoreExp(ClanHallManager.getInstance().getClanHallByOwner(activeChar.getClan()).getFunction(ClanHall.FUNC_RESTORE_EXP).getLvl());
+				if ((ClanHallManager.getInstance().getAbstractHallByOwner(activeChar.getClan()) != null) && (ClanHallManager.getInstance().getAbstractHallByOwner(activeChar.getClan()).getFunction(ClanHall.FUNC_RESTORE_EXP) != null)) {
+					activeChar.restoreExp(ClanHallManager.getInstance().getAbstractHallByOwner(activeChar.getClan()).getFunction(ClanHall.FUNC_RESTORE_EXP).getLvl());
 				}
 				break;
 			}
