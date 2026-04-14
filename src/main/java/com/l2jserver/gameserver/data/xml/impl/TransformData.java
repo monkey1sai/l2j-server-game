@@ -151,17 +151,17 @@ public final class TransformData implements IXmlReader {
 												transform.setTemplate(isMale, templateData);
 											}
 											
-											final StatsSet levelsSet = new StatsSet();
 											for (Node s = z.getFirstChild(); s != null; s = s.getNextSibling()) {
 												if ("level".equals(s.getNodeName())) {
+													final var levelsSet = new StatsSet();
 													attrs = s.getAttributes();
 													for (int i = 0; i < attrs.getLength(); i++) {
-														Node att = attrs.item(i);
+														final var att = attrs.item(i);
 														levelsSet.set(att.getNodeName(), att.getNodeValue());
 													}
+													templateData.addLevelData(new TransformLevelData(levelsSet));
 												}
 											}
-											templateData.addLevelData(new TransformLevelData(levelsSet));
 										}
 									}
 								}
