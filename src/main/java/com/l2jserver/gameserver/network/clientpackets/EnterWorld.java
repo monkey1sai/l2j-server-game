@@ -396,10 +396,10 @@ public class EnterWorld extends L2GameClientPacket {
 		
 		activeChar.sendPacket(WELCOME_TO_LINEAGE);
 		
-		activeChar.sendMessage(getText("VGhpcyBzZXJ2ZXIgdXNlcyBMMkosIGEgcHJvamVjdCBmb3VuZGVkIGJ5IEwyQ2hlZg=="));
-		activeChar.sendMessage(getText("YW5kIGRldmVsb3BlZCBieSBMMkogVGVhbSBhdCB3d3cubDJqc2VydmVyLmNvbQ=="));
-		activeChar.sendMessage(getText("Q29weXJpZ2h0IDIwMDQtMjAyNQ=="));
-		activeChar.sendMessage(getText("VGhhbmsgeW91IGZvciAyMSB5ZWFycyE="));
+		activeChar.sendMessage(getText("VGhpcyBzZXJ2ZXIgdXNlcyBMMkosIGEgcHJvamVjdCBmb3VuZGVkIGJ5IEwyQ2hlZg"));
+		activeChar.sendMessage(getText("YW5kIGRldmVsb3BlZCBieSBMMkogVGVhbSBhdCB3d3cubDJqc2VydmVyLmNvbQ"));
+		activeChar.sendMessage(getText("Q29weXJpZ2h0IDIwMDQtMjAyNg"));
+		activeChar.sendMessage(getText("VGhhbmsgeW91IGZvciAyMiB5ZWFycyE"));
 		
 		SevenSigns.getInstance().sendCurrentPeriodMsg(activeChar);
 		AnnouncementsTable.getInstance().showAnnouncements(activeChar);
